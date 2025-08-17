@@ -1,0 +1,52 @@
+{
+  "name": "AutomaticPDFHub - Generador de PDFs",
+  "uid": "automaticpdfhub-generator",
+  "description": "Generador automático de documentos PDF con integración completa a HubSpot. Crea contratos, propuestas, facturas y más usando datos dinámicos de tus contactos, deals y empresas.",
+  "allowedUrls": [
+    "https://automaticpdfhub.cloud",
+    "https://145.79.2.141"
+  ],
+  "auth": {
+    "redirectUrls": [
+      "https://automaticpdfhub.cloud/auth/hubspot/callback",
+      "https://automaticpdfhub.cloud/auth/success"
+    ],
+    "requiredScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.contacts.write",
+      "crm.objects.deals.read",
+      "crm.objects.deals.write", 
+      "crm.objects.companies.read",
+      "crm.objects.companies.write",
+      "crm.schemas.contacts.read",
+      "crm.schemas.deals.read", 
+      "crm.schemas.companies.read",
+      "files",
+      "automation"
+    ],
+    "optionalScopes": [],
+    "conditionallyRequiredScopes": []
+  },
+  "support": {
+    "supportEmail": "soporte@automaticpdfhub.cloud",
+    "documentationUrl": "https://automaticpdfhub.cloud/docs",
+    "supportUrl": "https://automaticpdfhub.cloud/support",
+    "supportPhone": "+5255000000"
+  },
+  "extensions": {
+    "crm": {
+      "cards": [
+        {
+          "file": "./extensions/example-card.json"
+        }
+      ]
+    },
+    "workflow": {
+      "actions": [
+        {
+          "file": "./extensions/pdf-workflow-action.json"
+        }
+      ]
+    }
+  }
+}

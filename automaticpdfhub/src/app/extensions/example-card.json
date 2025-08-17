@@ -1,0 +1,60 @@
+{
+  "type": "crm-card",
+  "data": {
+    "title": "🚀 Generador de PDFs AutomaticPDFHub",
+    "description": "Genera documentos PDF profesionales usando datos dinámicos de HubSpot",
+    "uid": "automaticpdfhub-generator-card",
+    "location": "crm.record.tab",
+    "module": {
+      "file": "PDFGeneratorCard.jsx"
+    },
+    "previewImage": {
+      "file": "assets/example-card-preview.png",
+      "altText": "AutomaticPDFHub - Generador de documentos PDF con datos dinámicos de HubSpot"
+    },
+    "objectTypes": [
+      {
+        "name": "contacts",
+        "propertiesToSend": [
+          "firstname",
+          "lastname", 
+          "email",
+          "phone",
+          "company",
+          "jobtitle",
+          "city",
+          "country",
+          "website",
+          "address"
+        ]
+      },
+      {
+        "name": "deals",
+        "propertiesToSend": [
+          "dealname",
+          "amount",
+          "dealstage", 
+          "pipeline",
+          "closedate",
+          "deal_currency_code",
+          "dealtype",
+          "description"
+        ]
+      },
+      {
+        "name": "companies",
+        "propertiesToSend": [
+          "name",
+          "domain",
+          "industry",
+          "phone",
+          "city",
+          "state",
+          "country", 
+          "website",
+          "description"
+        ]
+      }
+    ]
+  }
+}

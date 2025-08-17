@@ -1,0 +1,61 @@
+{
+  "type": "crm-card",
+  "data": {
+    "title": "🚀 Generador de PDFs",
+    "fetch": {
+      "targetUrl": "https://automaticpdfhub.cloud/api/hubspot/card-data",
+      "objectTypes": [
+        {
+          "name": "contacts",
+          "propertiesToSend": [
+            "firstname",
+            "lastname",
+            "email",
+            "phone",
+            "company",
+            "jobtitle",
+            "city",
+            "country",
+            "website",
+            "address"
+          ]
+        },
+        {
+          "name": "deals",
+          "propertiesToSend": [
+            "dealname",
+            "amount",
+            "dealstage",
+            "pipeline",
+            "closedate",
+            "deal_currency_code",
+            "dealtype",
+            "description"
+          ]
+        },
+        {
+          "name": "companies",
+          "propertiesToSend": [
+            "name",
+            "domain",
+            "industry",
+            "phone",
+            "city",
+            "state", 
+            "country",
+            "website",
+            "description"
+          ]
+        }
+      ]
+    },
+    "display": {
+      "properties": []
+    },
+    "actions": {
+      "baseUrls": [
+        "https://automaticpdfhub.cloud"
+      ]
+    }
+  }
+}

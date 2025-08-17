@@ -1,0 +1,88 @@
+{
+  "type": "workflow-action",
+  "data": {
+    "title": "🚀 Generar PDF Automático",
+    "description": "Genera un documento PDF usando un template y los datos del objeto HubSpot",
+    "uid": "automaticpdfhub-generate-pdf-action",
+    "actionUrl": "https://automaticpdfhub.cloud/api/hubspot/workflow-actions/generate-pdf",
+    "published": true,
+    "inputFields": [
+      {
+        "name": "templateId",
+        "displayName": "Template de PDF",
+        "description": "Selecciona el template que se usará para generar el PDF",
+        "type": "enumeration",
+        "required": true,
+        "options": []
+      },
+      {
+        "name": "documentName", 
+        "displayName": "Nombre del Documento",
+        "description": "Nombre personalizado para el documento PDF (opcional)",
+        "type": "string",
+        "required": false
+      },
+      {
+        "name": "uploadToFiles",
+        "displayName": "Subir a File Manager",
+        "description": "Subir automáticamente el PDF generado al File Manager de HubSpot",
+        "type": "bool",
+        "required": false,
+        "defaultValue": true
+      },
+      {
+        "name": "attachToRecord",
+        "displayName": "Adjuntar al Registro",
+        "description": "Adjuntar el PDF como archivo al registro actual",
+        "type": "bool", 
+        "required": false,
+        "defaultValue": true
+      },
+      {
+        "name": "notifyEmail",
+        "displayName": "Email de Notificación",
+        "description": "Email donde enviar notificación cuando el PDF esté listo (opcional)",
+        "type": "string",
+        "required": false
+      }
+    ],
+    "outputFields": [
+      {
+        "name": "documentId",
+        "displayName": "ID del Documento",
+        "description": "ID único del documento PDF generado",
+        "type": "string"
+      },
+      {
+        "name": "documentUrl",
+        "displayName": "URL del PDF",
+        "description": "URL pública para descargar el PDF generado",
+        "type": "string"
+      },
+      {
+        "name": "fileManagerId",
+        "displayName": "ID en File Manager",
+        "description": "ID del archivo en el File Manager de HubSpot",
+        "type": "string"
+      },
+      {
+        "name": "status",
+        "displayName": "Estado",
+        "description": "Estado de la generación del PDF",
+        "type": "string"
+      },
+      {
+        "name": "generatedAt",
+        "displayName": "Fecha de Generación", 
+        "description": "Timestamp de cuando se generó el PDF",
+        "type": "string"
+      }
+    ],
+    "objectTypes": [
+      "contacts",
+      "deals", 
+      "companies",
+      "tickets"
+    ]
+  }
+}

@@ -22,9 +22,15 @@ interface WorkflowActionRequest {
   // Configuración de la action (configurada en el iframe)
   inputFields: {
     templateId: string;
-    documentName: string;
-    attachToObject: boolean;
-    notificationEmail?: string;
+    documentName?: string;
+    documentFormat?: 'PDF' | 'HTML';
+    uploadToFiles?: boolean;
+    attachToRecord?: boolean;
+    notifyOwner?: boolean;
+    additionalEmails?: string;
+    documentTags?: string;
+    autoSendEmail?: boolean;
+    emailSubject?: string;
   };
   
   // Metadatos del workflow
@@ -44,9 +50,15 @@ interface WorkflowActionRequest {
 interface WorkflowActionResponse {
   outputFields: {
     documentId: string;
-    pdfUrl?: string;
-    hubspotFileId?: string;
-    generationStatus: 'queued' | 'completed' | 'failed';
+    documentUrl?: string;
+    fileManagerId?: string;
+    documentSize?: number;
+    generationStatus: 'completed' | 'processing' | 'failed';
+    generatedAt?: string;
+    templateUsed?: string;
+    variablesProcessed?: number;
+    processingTimeMs?: number;
+    errorMessage?: string;
   };
   completed: boolean;
   message: string;

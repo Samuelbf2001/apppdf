@@ -1,0 +1,200 @@
+{
+  "type": "workflow-action",
+  "data": {
+    "title": "🚀 AutomaticPDFHub - Generar PDF",
+    "description": "Genera un documento PDF profesional usando templates personalizados y datos dinámicos del registro actual",
+    "uid": "automaticpdfhub-generate-pdf-action",
+    "actionUrl": "https://automaticpdfhub.cloud/api/hubspot/workflow-actions/generate-pdf",
+    "published": true,
+    "targetUrl": "https://automaticpdfhub.cloud/hubspot/workflow-config",
+    "supportsMultipleEntities": false,
+    "inputFields": [
+      {
+        "name": "templateId",
+        "displayName": "📄 Template de PDF",
+        "description": "Selecciona el template que se usará para generar el documento PDF",
+        "type": "enumeration",
+        "required": true,
+        "options": [
+          {
+            "label": "🏗️ Configurar Templates (Abrir Constructor)",
+            "value": "OPEN_BUILDER",
+            "description": "Abrir el constructor visual para crear o editar templates"
+          }
+        ]
+      },
+      {
+        "name": "documentName",
+        "displayName": "📝 Nombre del Documento", 
+        "description": "Nombre personalizado para el documento PDF. Si se deja vacío, se generará automáticamente basado en el template y datos del registro",
+        "type": "string",
+        "required": false,
+        "defaultValue": "Documento-{{contact.firstname}}-{{deal.dealname}}"
+      },
+      {
+        "name": "documentFormat",
+        "displayName": "📋 Formato de Documento",
+        "description": "Formato de salida del documento generado",
+        "type": "enumeration", 
+        "required": true,
+        "defaultValue": "PDF",
+        "options": [
+          {
+            "label": "📄 PDF (Recomendado)",
+            "value": "PDF",
+            "description": "Genera un archivo PDF optimizado para impresión y visualización"
+          },
+          {
+            "label": "📰 HTML",
+            "value": "HTML", 
+            "description": "Genera una página HTML responsive"
+          }
+        ]
+      },
+      {
+        "name": "uploadToFiles",
+        "displayName": "📂 Subir a File Manager",
+        "description": "Subir automáticamente el documento generado al File Manager de HubSpot",
+        "type": "bool",
+        "required": false,
+        "defaultValue": true
+      },
+      {
+        "name": "attachToRecord",
+        "displayName": "📎 Adjuntar al Registro",
+        "description": "Adjuntar el documento como archivo al registro actual (contacto, deal o empresa)",
+        "type": "bool",
+        "required": false,
+        "defaultValue": true
+      },
+      {
+        "name": "notifyOwner",
+        "displayName": "📧 Notificar al Propietario",
+        "description": "Enviar notificación por email al propietario del registro cuando el PDF esté listo",
+        "type": "bool", 
+        "required": false,
+        "defaultValue": false
+      },
+      {
+        "name": "additionalEmails",
+        "displayName": "📮 Emails Adicionales",
+        "description": "Lista de emails adicionales para notificar (separados por comas)",
+        "type": "string",
+        "required": false,
+        "helpText": "Ejemplo: admin@empresa.com, gerente@empresa.com"
+      },
+      {
+        "name": "documentTags",
+        "displayName": "🏷️ Etiquetas del Documento",
+        "description": "Etiquetas para categorizar el documento (separadas por comas)",
+        "type": "string",
+        "required": false,
+        "helpText": "Ejemplo: contrato, propuesta, factura"
+      },
+      {
+        "name": "autoSendEmail",
+        "displayName": "📤 Envío Automático",
+        "description": "Enviar automáticamente el PDF por email al contacto principal",
+        "type": "bool",
+        "required": false,
+        "defaultValue": false
+      },
+      {
+        "name": "emailSubject",
+        "displayName": "📧 Asunto del Email",
+        "description": "Asunto personalizado para el email (solo si autoSendEmail está activado)",
+        "type": "string",
+        "required": false,
+        "defaultValue": "Tu documento {{template.name}} está listo",
+        "helpText": "Puedes usar variables como {{contact.firstname}}, {{deal.dealname}}, etc."
+      }
+    ],
+    "outputFields": [
+      {
+        "name": "documentId",
+        "displayName": "🆔 ID del Documento",
+        "description": "ID único del documento PDF generado en AutomaticPDFHub",
+        "type": "string"
+      },
+      {
+        "name": "documentUrl",
+        "displayName": "🔗 URL de Descarga",
+        "description": "URL pública para descargar el documento PDF generado",
+        "type": "string"
+      },
+      {
+        "name": "fileManagerId",
+        "displayName": "📂 ID en File Manager",
+        "description": "ID del archivo en el File Manager de HubSpot (si uploadToFiles está activado)",
+        "type": "string"
+      },
+      {
+        "name": "documentSize",
+        "displayName": "📏 Tamaño del Archivo",
+        "description": "Tamaño del documento PDF generado en bytes",
+        "type": "number"
+      },
+      {
+        "name": "generationStatus",
+        "displayName": "✅ Estado de Generación",
+        "description": "Estado final de la generación del documento",
+        "type": "enumeration",
+        "options": [
+          {
+            "label": "✅ Completado",
+            "value": "completed"
+          },
+          {
+            "label": "⏳ Procesando",
+            "value": "processing" 
+          },
+          {
+            "label": "❌ Error",
+            "value": "failed"
+          }
+        ]
+      },
+      {
+        "name": "generatedAt",
+        "displayName": "📅 Fecha de Generación",
+        "description": "Timestamp ISO 8601 de cuando se completó la generación",
+        "type": "string"
+      },
+      {
+        "name": "templateUsed",
+        "displayName": "📄 Template Utilizado",
+        "description": "Nombre del template que se utilizó para generar el documento",
+        "type": "string"
+      },
+      {
+        "name": "variablesProcessed",
+        "displayName": "🧩 Variables Procesadas",
+        "description": "Número de variables de HubSpot que se procesaron en el documento",
+        "type": "number"
+      },
+      {
+        "name": "processingTimeMs",
+        "displayName": "⏱️ Tiempo de Procesamiento",
+        "description": "Tiempo que tomó generar el documento en milisegundos",
+        "type": "number"
+      },
+      {
+        "name": "errorMessage",
+        "displayName": "❌ Mensaje de Error",
+        "description": "Descripción del error si la generación falló",
+        "type": "string"
+      }
+    ],
+    "objectTypes": [
+      "contacts",
+      "deals",
+      "companies", 
+      "tickets"
+    ],
+    "executionRules": {
+      "supportsBatching": false,
+      "maxRetries": 3,
+      "retryDelayMs": 5000
+    }
+  }
+}
