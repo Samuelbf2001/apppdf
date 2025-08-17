@@ -1,0 +1,212 @@
+# Docker Compose para ambiente de producción
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hubspot-pdf-prod-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: hubspot_pdf_prod_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d hubspot_pdf_prod_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  redis:
+    image: redis:7-alpine
+    container_name: hubspot-pdf-prod-redis
+    restart: always
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - prod-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "auth", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  gotenberg:
+    image: gotenberg/gotenberg:7
+    container_name: hubspot-pdf-prod-gotenberg
+    restart: always
+    networks:
+      - prod-network
+    command:
+      - "gotenberg"
+      - "--chromium-disable-web-security"
+      - "--chromium-allow-file-access-from-files"
+      - "--chromium-disable-javascript"
+      - "--chromium-allow-insecure-localhost"
+      - "--chromium-ignore-certificate-errors"
+      - "--log-level=warn"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  backend:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-backend:${IMAGE_TAG}
+    container_name: hubspot-pdf-prod-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    env_file:
+      - ../config/production.env
+    volumes:
+      - backend_prod_storage:/app/storage
+      - backend_prod_logs:/app/logs
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  frontend:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-frontend:${IMAGE_TAG}
+    container_name: hubspot-pdf-prod-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: https://api.tudominio.com/api
+      REACT_APP_ENV: production
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  nginx:
+    image: nginx:alpine
+    container_name: hubspot-pdf-prod-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx/production.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Monitoreo
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hubspot-pdf-prod-prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - prod-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hubspot-pdf-prod-grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - prod-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+networks:
+  prod-network:
+    driver: bridge
+    name: hubspot-pdf-prod-network
+
+volumes:
+  postgres_prod_data:
+    name: hubspot-pdf-prod-postgres-data
+  redis_prod_data:
+    name: hubspot-pdf-prod-redis-data
+  backend_prod_storage:
+    name: hubspot-pdf-prod-backend-storage
+  backend_prod_logs:
+    name: hubspot-pdf-prod-backend-logs
+  prometheus_data:
+    name: hubspot-pdf-prod-prometheus-data
+  grafana_data:
+    name: hubspot-pdf-prod-grafana-data

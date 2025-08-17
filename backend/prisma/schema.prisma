@@ -1,0 +1,280 @@
+// Configuración del generador y datasource de Prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// MODELO DE TENANTS (Multi-tenancy)
+// ========================================
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  
+  // Configuración de HubSpot
+  hubspotPortalId     String  @unique
+  hubspotAccessToken  String?
+  hubspotRefreshToken String?
+  hubspotExpiresAt    DateTime?
+  
+  // Estado y configuración
+  isActive    Boolean  @default(true)
+  settings    Json?    // Configuraciones específicas del tenant
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  users       User[]
+  templates   Template[]
+  documents   Document[]
+  
+  @@map("tenants")
+}
+
+// ========================================
+// MODELO DE USUARIOS
+// ========================================
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  
+  // Información del usuario
+  firstName String?
+  lastName  String?
+  avatar    String?
+  
+  // Relación con tenant (multi-tenancy)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Configuración de HubSpot específica del usuario
+  hubspotUserId String?
+  
+  // Configuración y preferencias
+  isActive     Boolean @default(true)
+  preferences  Json?   // Preferencias del usuario en JSON
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+  
+  // Relaciones
+  templatesCreated Template[] @relation("TemplateCreator")
+  documentsCreated Document[] @relation("DocumentCreator")
+  
+  @@map("users")
+}
+
+// ========================================
+// MODELO DE TEMPLATES
+// ========================================
+model Template {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  
+  // Contenido del template
+  content     String  // HTML content con variables {{variable}}
+  variables   Json    // Array de TemplateVariable en formato JSON
+  
+  // Configuración
+  isActive    Boolean @default(true)
+  isDefault   Boolean @default(false) // Template por defecto del tenant
+  
+  // Relación con tenant (multi-tenancy)
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Creador del template
+  createdById String
+  createdBy   User   @relation("TemplateCreator", fields: [createdById], references: [id])
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  documents   Document[]
+  
+  @@map("templates")
+  @@index([tenantId])
+  @@index([createdById])
+}
+
+// ========================================
+// MODELO DE DOCUMENTOS
+// ========================================
+model Document {
+  id       String @id @default(cuid())
+  name     String
+  
+  // Relación con template
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+  
+  // Estado del documento
+  status     DocumentStatus @default(PENDING)
+  
+  // Archivos y URLs
+  filePath   String? // Path local del archivo PDF
+  fileUrl    String? // URL de descarga del PDF
+  fileSize   Int?    // Tamaño del archivo en bytes
+  
+  // Variables utilizadas para generar el documento
+  variables  Json    // Valores de las variables usadas
+  
+  // Integración con HubSpot
+  hubspotObjectId   String?              // ID del objeto en HubSpot
+  hubspotObjectType HubSpotObjectType?   // Tipo de objeto (contact, deal, etc.)
+  hubspotFileId     String?              // ID del archivo subido a HubSpot
+  
+  // Procesamiento
+  processingStartedAt  DateTime?
+  processingCompletedAt DateTime?
+  errorMessage         String?
+  
+  // Relación con tenant (multi-tenancy)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Creador del documento
+  createdById String
+  createdBy   User   @relation("DocumentCreator", fields: [createdById], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("documents")
+  @@index([tenantId])
+  @@index([templateId])
+  @@index([status])
+  @@index([createdById])
+  @@index([hubspotObjectId])
+}
+
+// ========================================
+// MODELO DE JOBS DE PROCESAMIENTO
+// ========================================
+model ProcessingJob {
+  id         String @id @default(cuid())
+  
+  // Tipo y configuración del job
+  type       JobType
+  status     JobStatus @default(PENDING)
+  priority   Int       @default(0)
+  
+  // Datos del job
+  data       Json      // Datos específicos del job
+  result     Json?     // Resultado del job
+  error      String?   // Error si falla
+  
+  // Metadatos de procesamiento
+  attempts   Int       @default(0)
+  maxAttempts Int      @default(3)
+  
+  // Timestamps
+  scheduledFor DateTime? // Para jobs programados
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relación con tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@map("processing_jobs")
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([scheduledFor])
+}
+
+// ========================================
+// MODELO DE LOGS DE AUDITORIA
+// ========================================
+model AuditLog {
+  id          String @id @default(cuid())
+  
+  // Acción realizada
+  action      String    // CREATE, UPDATE, DELETE, etc.
+  entityType  String    // template, document, user, etc.
+  entityId    String    // ID de la entidad afectada
+  
+  // Datos de la acción
+  oldValues   Json?     // Valores anteriores
+  newValues   Json?     // Valores nuevos
+  
+  // Usuario que realizó la acción
+  userId      String?
+  userEmail   String?   // Email del usuario (por si el usuario se elimina)
+  
+  // Contexto
+  ipAddress   String?
+  userAgent   String?
+  
+  // Relación con tenant
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Timestamp
+  createdAt   DateTime @default(now())
+  
+  @@map("audit_logs")
+  @@index([tenantId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum DocumentStatus {
+  PENDING     // En cola para procesamiento
+  PROCESSING  // Procesándose actualmente
+  COMPLETED   // Completado exitosamente
+  FAILED      // Error en el procesamiento
+  UPLOADED    // Subido a HubSpot exitosamente
+  
+  @@map("document_status")
+}
+
+enum HubSpotObjectType {
+  CONTACT
+  DEAL
+  COMPANY
+  TICKET
+  
+  @@map("hubspot_object_type")
+}
+
+enum JobType {
+  DOCUMENT_GENERATION  // Generación de PDF
+  HUBSPOT_UPLOAD      // Subida a HubSpot
+  CLEANUP             // Limpieza de archivos temporales
+  
+  @@map("job_type")
+}
+
+enum JobStatus {
+  PENDING     // En cola
+  PROCESSING  // Procesándose
+  COMPLETED   // Completado
+  FAILED      // Fallido
+  CANCELLED   // Cancelado
+  
+  @@map("job_status")
+}

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de PDF Generator</title>
+    
+    <!-- Material Design Lite para UI consistente -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    
+    <!-- HubSpot Extensions SDK -->
+    <script src="https://static.hsappstatic.net/extensions-sdk/v1/extensions-sdk.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #007a8c 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #33475b;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+        
+        .btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #e55a2b;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .template-card {
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .template-card:hover {
+            border-color: #ff6b35;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
+        }
+        
+        .template-card.selected {
+            border-color: #ff6b35;
+            background: #fff8f5;
+        }
+        
+        .template-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .variables-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .variable-chip {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ffcc02;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 style="margin: 0; font-size: 24px;">📄 PDF Generator</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9;">Configurar generación automática de documentos</p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Cargando configuración...</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="error-state" class="content hidden">
+            <div class="alert alert-error">
+                <strong>Error de conexión</strong><br>
+                No se pudo conectar con el servicio de PDF Generator.
+                <br><br>
+                <button class="btn" onclick="initialize()">Reintentar</button>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div id="main-content" class="content hidden">
+            <!-- Información del contexto -->
+            <div class="alert alert-info">
+                <strong>🎯 Contexto del Workflow</strong><br>
+                <span id="context-info">Cargando información del objeto...</span>
+            </div>
+
+            <!-- Configuración -->
+            <form id="config-form">
+                <!-- Selección de template -->
+                <div class="form-group">
+                    <label for="template-select">
+                        <strong>1. Seleccionar Template</strong>
+                        <small style="color: #666; display: block; font-weight: normal;">
+                            Elige el template que se usará para generar el PDF
+                        </small>
+                    </label>
+                    
+                    <div id="templates-loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando templates disponibles...</p>
+                    </div>
+                    
+                    <div id="templates-container" class="hidden">
+                        <!-- Templates se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Configuración del documento -->
+                <div class="form-group">
+                    <label for="document-name">
+                        <strong>2. Nombre del Documento</strong>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="document-name" 
+                        class="form-control" 
+                        placeholder="Ej: Contrato - {{contact.firstname}} {{contact.lastname}}"
+                        value="Documento - {{contact.firstname}} {{contact.lastname}}"
+                    >
+                    <small style="color: #666;">
+                        Puedes usar variables como {{contact.firstname}}, {{deal.amount}}, etc.
+                    </small>
+                </div>
+
+                <!-- Opciones adicionales -->
+                <div class="form-group">
+                    <label>
+                        <strong>3. Opciones</strong>
+                    </label>
+                    
+                    <div style="margin-top: 12px;">
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-bottom: 8px;">
+                            <input type="checkbox" id="attach-to-object" checked style="margin-right: 8px;">
+                            Adjuntar PDF automáticamente al objeto
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; font-weight: normal;">
+                            <input type="checkbox" id="send-notification" style="margin-right: 8px;">
+                            Enviar notificación por email cuando esté listo
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Email de notificación -->
+                <div class="form-group" id="notification-email-group" style="display: none;">
+                    <label for="notification-email">Email de Notificación</label>
+                    <input 
+                        type="email" 
+                        id="notification-email" 
+                        class="form-control" 
+                        placeholder="admin@empresa.com"
+                    >
+                </div>
+
+                <!-- Preview del template seleccionado -->
+                <div id="template-preview" class="form-group hidden">
+                    <label><strong>Vista Previa del Template</strong></label>
+                    <div class="template-preview" id="preview-content">
+                        <!-- Preview se mostrará aquí -->
+                    </div>
+                    <div class="variables-list" id="template-variables">
+                        <!-- Variables se mostrarán aquí -->
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer con acciones -->
+        <div id="footer" class="footer hidden">
+            <button type="button" class="btn" onclick="testConfiguration()" id="test-btn">
+                🧪 Probar Configuración
+            </button>
+            <button type="button" class="btn" onclick="saveConfiguration()" id="save-btn" style="margin-left: 12px;">
+                💾 Guardar Configuración
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let hubspot;
+        let templates = [];
+        let selectedTemplate = null;
+        let objectContext = null;
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        async function initialize() {
+            try {
+                showElement('loading');
+                hideElement('error-state');
+                hideElement('main-content');
+                hideElement('footer');
+
+                // Inicializar HubSpot Extensions SDK
+                hubspot = window.HubSpotConversations || window.hubspot;
+                
+                if (!hubspot) {
+                    throw new Error('HubSpot Extensions SDK no disponible');
+                }
+
+                // Obtener contexto del objeto
+                await loadObjectContext();
+                
+                // Cargar templates disponibles
+                await loadTemplates();
+                
+                // Cargar configuración existente si existe
+                await loadExistingConfiguration();
+                
+                // Configurar event listeners
+                setupEventListeners();
+
+                showElement('main-content');
+                showElement('footer');
+                hideElement('loading');
+
+            } catch (error) {
+                console.error('Error inicializando:', error);
+                hideElement('loading');
+                showElement('error-state');
+            }
+        }
+
+        async function loadObjectContext() {
+            try {
+                // Obtener información del objeto que disparó el workflow
+                const context = await hubspot.getContext();
+                objectContext = context;
+                
+                const objectType = context.objectType || 'CONTACT';
+                const objectId = context.objectId;
+                
+                document.getElementById('context-info').innerHTML = `
+                    Tipo de objeto: <strong>${getObjectTypeLabel(objectType)}</strong><br>
+                    ID: <strong>${objectId}</strong>
+                `;
+
+            } catch (error) {
+                console.error('Error cargando contexto:', error);
+                document.getElementById('context-info').innerHTML = 
+                    'No se pudo cargar el contexto del objeto';
+            }
+        }
+
+        async function loadTemplates() {
+            try {
+                hideElement('templates-container');
+                showElement('templates-loading');
+
+                // Llamar a la API para obtener templates
+                const response = await fetch(`${getApiUrl()}/api/templates?limit=50&isActive=true`, {
+                    headers: {
+                        'Authorization': `Bearer ${await getAccessToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error cargando templates');
+                }
+
+                const data = await response.json();
+                templates = data.data || [];
+
+                renderTemplates();
+
+                hideElement('templates-loading');
+                showElement('templates-container');
+
+            } catch (error) {
+                console.error('Error cargando templates:', error);
+                hideElement('templates-loading');
+                
+                document.getElementById('templates-container').innerHTML = `
+                    <div class="alert alert-error">
+                        Error cargando templates. Verifica tu conexión.
+                        <br><br>
+                        <button class="btn" onclick="loadTemplates()">Reintentar</button>
+                    </div>
+                `;
+                showElement('templates-container');
+            }
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById('templates-container');
+            
+            if (templates.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        No hay templates disponibles. 
+                        <a href="${getFrontendUrl()}/templates/new" target="_blank">Crear primer template</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const templatesHtml = templates.map(template => `
+                <div class="template-card" data-template-id="${template.id}" onclick="selectTemplate('${template.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px 0; color: #33475b;">${template.name}</h3>
+                            ${template.description ? `<p style="margin: 0 0 8px 0; color: #7c8894;">${template.description}</p>` : ''}
+                            <div style="font-size: 12px; color: #999;">
+                                ${template.variables.length} variables • 
+                                Actualizado: ${new Date(template.updatedAt).toLocaleDateString('es-MX')}
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; color: #ff6b35;">📄</div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = templatesHtml;
+        }
+
+        function selectTemplate(templateId) {
+            // Remover selección anterior
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Seleccionar nuevo template
+            const selectedCard = document.querySelector(`[data-template-id="${templateId}"]`);
+            selectedCard.classList.add('selected');
+
+            selectedTemplate = templates.find(t => t.id === templateId);
+            
+            // Mostrar preview
+            showTemplatePreview();
+            
+            // Actualizar nombre del documento con el template
+            updateDocumentName();
+        }
+
+        function showTemplatePreview() {
+            if (!selectedTemplate) return;
+
+            const previewElement = document.getElementById('preview-content');
+            const variablesElement = document.getElementById('template-variables');
+
+            // Mostrar contenido truncado
+            const content = selectedTemplate.content;
+            const truncatedContent = content.length > 500 ? 
+                content.substring(0, 500) + '...' : content;
+            
+            previewElement.innerHTML = truncatedContent;
+
+            // Mostrar variables
+            const variablesHtml = selectedTemplate.variables.map(variable => `
+                <span class="variable-chip">{{${variable.name}}}</span>
+            `).join('');
+            
+            variablesElement.innerHTML = variablesHtml;
+
+            showElement('template-preview');
+        }
+
+        function updateDocumentName() {
+            if (!selectedTemplate || !objectContext) return;
+
+            const objectType = objectContext.objectType || 'CONTACT';
+            const baseName = selectedTemplate.name;
+            
+            // Sugerir nombre basado en el template y tipo de objeto
+            let suggestedName = baseName;
+            
+            if (objectType === 'CONTACT') {
+                suggestedName += ' - {{contact.firstname}} {{contact.lastname}}';
+            } else if (objectType === 'DEAL') {
+                suggestedName += ' - {{deal.dealname}}';
+            } else if (objectType === 'COMPANY') {
+                suggestedName += ' - {{company.name}}';
+            }
+
+            document.getElementById('document-name').value = suggestedName;
+        }
+
+        function setupEventListeners() {
+            // Checkbox de notificación
+            document.getElementById('send-notification').addEventListener('change', function(e) {
+                const emailGroup = document.getElementById('notification-email-group');
+                emailGroup.style.display = e.target.checked ? 'block' : 'none';
+            });
+        }
+
+        async function testConfiguration() {
+            if (!selectedTemplate) {
+                alert('Por favor selecciona un template primero');
+                return;
+            }
+
+            const testBtn = document.getElementById('test-btn');
+            testBtn.disabled = true;
+            testBtn.textContent = '🧪 Probando...';
+
+            try {
+                // Simular generación con datos de prueba
+                const testData = {
+                    templateId: selectedTemplate.id,
+                    name: document.getElementById('document-name').value || 'Documento de Prueba',
+                    variables: generateTestVariables(),
+                    hubspotObjectId: objectContext?.objectId,
+                    hubspotObjectType: objectContext?.objectType,
+                };
+
+                const response = await fetch(`${getApiUrl()}/api/documents/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${await getAccessToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la prueba');
+                }
+
+                const result = await response.json();
+                
+                alert(`✅ Prueba exitosa!\n\nDocumento generado:\n- ID: ${result.data.id}\n- Estado: ${result.data.status}\n\nLa configuración funcionará correctamente en el workflow.`);
+
+            } catch (error) {
+                console.error('Error en prueba:', error);
+                alert('❌ Error en la prueba. Verifica la configuración.');
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🧪 Probar Configuración';
+            }
+        }
+
+        async function saveConfiguration() {
+            if (!selectedTemplate) {
+                alert('Por favor selecciona un template');
+                return;
+            }
+
+            const documentName = document.getElementById('document-name').value;
+            if (!documentName.trim()) {
+                alert('Por favor ingresa un nombre para el documento');
+                return;
+            }
+
+            const config = {
+                templateId: selectedTemplate.id,
+                documentName: documentName.trim(),
+                attachToObject: document.getElementById('attach-to-object').checked,
+                notificationEmail: document.getElementById('send-notification').checked ? 
+                    document.getElementById('notification-email').value : null,
+            };
+
+            try {
+                // Guardar configuración usando HubSpot Extensions SDK
+                await hubspot.actions.saveSettings(config);
+                
+                alert('✅ Configuración guardada exitosamente!\n\nLa action está lista para usarse en workflows.');
+
+                // Cerrar iframe
+                if (hubspot.actions.close) {
+                    hubspot.actions.close();
+                }
+
+            } catch (error) {
+                console.error('Error guardando configuración:', error);
+                alert('❌ Error guardando configuración. Inténtalo de nuevo.');
+            }
+        }
+
+        async function loadExistingConfiguration() {
+            try {
+                // Cargar configuración existente si está disponible
+                const existingConfig = await hubspot.actions.getSettings();
+                
+                if (existingConfig && existingConfig.templateId) {
+                    // Aplicar configuración existente
+                    document.getElementById('document-name').value = existingConfig.documentName || '';
+                    document.getElementById('attach-to-object').checked = existingConfig.attachToObject !== false;
+                    
+                    if (existingConfig.notificationEmail) {
+                        document.getElementById('send-notification').checked = true;
+                        document.getElementById('notification-email').value = existingConfig.notificationEmail;
+                        document.getElementById('notification-email-group').style.display = 'block';
+                    }
+
+                    // Seleccionar template si existe
+                    setTimeout(() => {
+                        if (templates.find(t => t.id === existingConfig.templateId)) {
+                            selectTemplate(existingConfig.templateId);
+                        }
+                    }, 100);
+                }
+            } catch (error) {
+                console.log('No hay configuración existente:', error);
+            }
+        }
+
+        // Funciones helper
+        function generateTestVariables() {
+            const testVars = {};
+            
+            if (objectContext?.objectType === 'CONTACT') {
+                testVars['contact.firstname'] = 'Juan';
+                testVars['contact.lastname'] = 'Pérez';
+                testVars['contact.email'] = 'juan.perez@ejemplo.com';
+            } else if (objectContext?.objectType === 'DEAL') {
+                testVars['deal.dealname'] = 'Deal de Prueba';
+                testVars['deal.amount'] = '50000';
+            } else if (objectContext?.objectType === 'COMPANY') {
+                testVars['company.name'] = 'Empresa de Prueba S.A.';
+            }
+
+            return testVars;
+        }
+
+        function getObjectTypeLabel(objectType) {
+            const labels = {
+                'CONTACT': 'Contacto',
+                'DEAL': 'Deal',
+                'COMPANY': 'Empresa',
+                'TICKET': 'Ticket',
+            };
+            return labels[objectType] || objectType;
+        }
+
+        async function getAccessToken() {
+            // En el contexto de HubSpot, el token se obtiene del SDK
+            try {
+                const auth = await hubspot.auth.getAccessToken();
+                return auth.token;
+            } catch (error) {
+                console.error('Error obteniendo token:', error);
+                throw new Error('No se pudo obtener token de acceso');
+            }
+        }
+
+        function getApiUrl() {
+            // URL de la API según el entorno
+            const hostname = window.location.hostname;
+            
+            if (hostname.includes('localhost')) {
+                return 'http://localhost:3002';
+            } else if (hostname.includes('staging')) {
+                return 'https://staging-api.tudominio.com';
+            } else {
+                return 'https://api.tudominio.com';
+            }
+        }
+
+        function getFrontendUrl() {
+            const hostname = window.location.hostname;
+            
+            if (hostname.includes('localhost')) {
+                return 'http://localhost:3000';
+            } else if (hostname.includes('staging')) {
+                return 'https://staging.tudominio.com';
+            } else {
+                return 'https://tudominio.com';
+            }
+        }
+
+        function showElement(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.remove('hidden');
+            }
+        }
+
+        function hideElement(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.add('hidden');
+            }
+        }
+
+        // Manejo de errores global
+        window.addEventListener('error', function(event) {
+            console.error('Error global:', event.error);
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Promise rechazada:', event.reason);
+        });
+    </script>
+</body>
+</html>

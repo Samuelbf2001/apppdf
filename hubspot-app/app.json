@@ -1,0 +1,124 @@
+{
+  "name": "HubSpot PDF Generator",
+  "description": "Generador automático de documentos PDF con variables dinámicas de HubSpot",
+  "version": "1.0.0",
+  "appId": 12345678,
+  "developer": {
+    "name": "Tu Empresa",
+    "email": "soporte@tuempresa.com",
+    "website": "https://tuempresa.com"
+  },
+  "authentication": {
+    "type": "oauth2",
+    "clientId": "${HUBSPOT_CLIENT_ID}",
+    "clientSecret": "${HUBSPOT_CLIENT_SECRET}",
+    "redirectUri": "${HUBSPOT_REDIRECT_URI}",
+    "scopes": [
+      "contacts",
+      "content", 
+      "automation",
+      "files",
+      "crm.objects.deals.read",
+      "crm.objects.deals.write",
+      "crm.objects.contacts.read", 
+      "crm.objects.contacts.write",
+      "crm.objects.companies.read",
+      "crm.objects.companies.write"
+    ]
+  },
+  "public": false,
+  "accountTypes": ["STANDARD", "PORTAL"],
+  "extensions": {
+    "customActions": [
+      {
+        "id": "generate-pdf-document",
+        "name": "Generar Documento PDF",
+        "description": "Genera automáticamente documentos PDF usando templates personalizados con variables de HubSpot",
+        "category": "AUTOMATION",
+        "objectTypes": ["CONTACT", "DEAL", "COMPANY", "TICKET"],
+        "configurationUrl": "${BASE_URL}/hubspot-app/extensions/pdf-generator-config.html",
+        "executionUrl": "${BASE_URL}/api/hubspot/workflow-actions/generate-pdf",
+        "icon": "https://tuempresa.com/assets/pdf-icon.png",
+        "inputs": [
+          {
+            "name": "templateId",
+            "label": "Template a usar",
+            "description": "Selecciona el template que se usará para generar el PDF",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "documentName", 
+            "label": "Nombre del documento",
+            "description": "Nombre que tendrá el documento PDF generado",
+            "type": "string",
+            "required": true,
+            "defaultValue": "{{objeto.name}} - Documento"
+          },
+          {
+            "name": "attachToObject",
+            "label": "Adjuntar al objeto",
+            "description": "Si debe adjuntarse automáticamente al objeto que disparó el workflow",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          {
+            "name": "notificationEmail",
+            "label": "Email de notificación", 
+            "description": "Email donde notificar cuando el PDF esté listo (opcional)",
+            "type": "string",
+            "required": false
+          }
+        ],
+        "outputs": [
+          {
+            "name": "documentId",
+            "label": "ID del documento generado",
+            "type": "string"
+          },
+          {
+            "name": "pdfUrl",
+            "label": "URL del PDF generado", 
+            "type": "string"
+          },
+          {
+            "name": "hubspotFileId",
+            "label": "ID del archivo en HubSpot",
+            "type": "string"
+          },
+          {
+            "name": "generationStatus",
+            "label": "Estado de generación",
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "webhooks": {
+    "endpoints": [
+      {
+        "url": "${BASE_URL}/api/webhooks/hubspot",
+        "secret": "${WEBHOOK_SECRET}",
+        "events": [
+          "contact.propertyChange",
+          "deal.propertyChange", 
+          "company.propertyChange"
+        ]
+      }
+    ]
+  },
+  "settings": {
+    "allowedOrigins": [
+      "${FRONTEND_URL}",
+      "${BASE_URL}"
+    ],
+    "permissions": {
+      "contacts": ["read", "write"],
+      "deals": ["read", "write"], 
+      "companies": ["read", "write"],
+      "files": ["read", "write"],
+      "automation": ["read", "write"]
+    }
+  }
+}

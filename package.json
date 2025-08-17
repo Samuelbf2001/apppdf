@@ -1,0 +1,74 @@
+{
+  "name": "hubspot-pdf-generator",
+  "version": "1.0.0",
+  "description": "Generador automático de documentos PDF con integración completa a HubSpot",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && npm start",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:fix": "npm run lint:fix:backend && npm run lint:fix:frontend",
+    "lint:fix:backend": "cd backend && npm run lint:fix",
+    "lint:fix:frontend": "cd frontend && npm run lint:fix",
+    "setup": "node scripts/setup.js",
+    "setup:dev": "bash scripts/setup-dev.sh",
+    "setup:dev:windows": "scripts/setup-dev.bat",
+    "env:check": "node scripts/env-check.js",
+    "env:generate-secrets": "node scripts/generate-secrets.js",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "docker:clean": "docker-compose -f docker-compose.dev.yml down -v --remove-orphans",
+    "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:seed": "cd backend && npx prisma db seed",
+    "db:reset": "cd backend && npx prisma migrate reset",
+    "db:studio": "cd backend && npx prisma studio",
+    "deploy:staging": "bash scripts/deploy.sh staging",
+    "deploy:production": "bash scripts/deploy.sh production",
+    "backup:db": "bash scripts/backup-db.sh",
+    "restore:db": "bash scripts/restore-db.sh"
+  },
+  "keywords": [
+    "hubspot",
+    "pdf",
+    "generator",
+    "documents",
+    "automation",
+    "typescript",
+    "react",
+    "nodejs"
+  ],
+  "author": "Tu Equipo de Desarrollo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/hubspot-pdf-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/hubspot-pdf-generator/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/hubspot-pdf-generator#readme"
+}

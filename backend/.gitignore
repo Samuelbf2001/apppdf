@@ -1,0 +1,97 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos compilados
+dist/
+build/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory usado por tools como istanbul
+coverage/
+*.lcov
+
+# Directorio de dependencias de nyc test coverage
+.nyc_output
+
+# Instrumentación de node
+.node_repl_history
+
+# Output de 'npm pack'
+*.tgz
+
+# Archivo de integridad de Yarn
+.yarn-integrity
+
+# Archivos de cache de parcel-bundler
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build output
+.nuxt
+
+# Archivos de build de Gatsby
+public
+
+# Directorio de dependencias de Storybook
+.out
+
+# Archivos temporales
+.temp
+.tmp
+
+# Archivos específicos de IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Prisma
+prisma/migrations/
+*.db
+*.sqlite
+
+# Archivos PDF generados (solo para desarrollo)
+uploads/
+temp/
+generated/
+
+# PM2
+ecosystem.config.js
+
+# Docker
+.dockerignore

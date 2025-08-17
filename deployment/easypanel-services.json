@@ -1,0 +1,138 @@
+{
+  "project": {
+    "name": "hubspot-pdf-generator",
+    "domain": "automaticpdfhub.cloud",
+    "environment": "production"
+  },
+  "services": [
+    {
+      "name": "automaticpdf-postgres",
+      "type": "database",
+      "engine": "postgresql",
+      "version": "15",
+      "port": 5487,
+      "config": {
+        "database": "automaticpdf_db",
+        "username": "automaticpdf_user",
+        "password": "GENERAR_PASSWORD_SEGURO",
+        "storage": "5GB",
+        "memory": "512MB"
+      }
+    },
+    {
+      "name": "automaticpdf-redis", 
+      "type": "database",
+      "engine": "redis",
+      "version": "7",
+      "port": 6418,
+      "config": {
+        "password": "GENERAR_PASSWORD_SEGURO",
+        "storage": "1GB",
+        "memory": "256MB"
+      }
+    },
+    {
+      "name": "automaticpdf-gotenberg",
+      "type": "app",
+      "image": "gotenberg/gotenberg:7",
+      "port": 3021,
+      "internal_port": 3000,
+      "config": {
+        "memory": "1GB",
+        "cpu": "0.5",
+        "command": "gotenberg --chromium-disable-web-security --log-level=warn",
+        "health_check": "/health"
+      }
+    },
+    {
+      "name": "automaticpdf-backend",
+      "type": "app",
+      "source": "github",
+      "repository": "TU-USUARIO/hubspot-pdf-generator",
+      "branch": "main",
+      "build_context": "./backend",
+      "dockerfile": "Dockerfile",
+      "build_target": "production",
+      "port": 3022,
+      "internal_port": 3002,
+      "config": {
+        "memory": "2GB",
+        "cpu": "1.0",
+        "health_check": "/health"
+      },
+      "environment": {
+        "NODE_ENV": "production",
+        "APP_PORT": "3002",
+        "FRONTEND_URL": "https://automaticpdfhub.cloud",
+        "DATABASE_URL": "postgresql://automaticpdf_user:PASSWORD_POSTGRES@automaticpdf-postgres:5432/automaticpdf_db?schema=public",
+        "REDIS_URL": "redis://:PASSWORD_REDIS@automaticpdf-redis:6379",
+        "GOTENBERG_URL": "http://automaticpdf-gotenberg:3000",
+        "HUBSPOT_CLIENT_ID": "CONFIGURAR_CON_HUBSPOT",
+        "HUBSPOT_CLIENT_SECRET": "CONFIGURAR_CON_HUBSPOT", 
+        "HUBSPOT_REDIRECT_URI": "https://automaticpdfhub.cloud/api/auth/hubspot/callback",
+        "JWT_SECRET": "GENERAR_SECRET_32_CARACTERES",
+        "STORAGE_PATH": "/app/storage",
+        "FILE_BASE_URL": "https://automaticpdfhub.cloud/files",
+        "DOCUMENT_CONCURRENCY": "3",
+        "HUBSPOT_CONCURRENCY": "2",
+        "LOG_LEVEL": "warn",
+        "RATE_LIMIT_MAX_REQUESTS": "200",
+        "MAX_FILE_SIZE_MB": "25"
+      }
+    },
+    {
+      "name": "automaticpdf-frontend",
+      "type": "app", 
+      "source": "github",
+      "repository": "TU-USUARIO/hubspot-pdf-generator",
+      "branch": "main",
+      "build_context": "./frontend",
+      "dockerfile": "Dockerfile", 
+      "build_target": "production",
+      "port": 3020,
+      "internal_port": 80,
+      "config": {
+        "memory": "512MB",
+        "cpu": "0.5"
+      },
+      "build_args": {
+        "REACT_APP_API_URL": "https://automaticpdfhub.cloud/api",
+        "REACT_APP_FILES_URL": "https://automaticpdfhub.cloud/files",
+        "REACT_APP_ENV": "production"
+      }
+    },
+    {
+      "name": "automaticpdf-nginx",
+      "type": "app",
+      "image": "nginx:alpine", 
+      "port": 8095,
+      "internal_port": 80,
+      "config": {
+        "memory": "128MB",
+        "cpu": "0.2",
+        "volumes": [
+          "./deployment/nginx-production.conf:/etc/nginx/conf.d/default.conf:ro"
+        ]
+      }
+    }
+  ],
+  "domain_configuration": {
+    "domain": "automaticpdfhub.cloud",
+    "service": "automaticpdf-nginx",
+    "port": 8095,
+    "ssl": "letsencrypt_auto"
+  },
+  "deployment_order": [
+    "automaticpdf-postgres",
+    "automaticpdf-redis", 
+    "automaticpdf-gotenberg",
+    "automaticpdf-backend",
+    "automaticpdf-frontend",
+    "automaticpdf-nginx"
+  ],
+  "verification_urls": [
+    "https://automaticpdfhub.cloud/health",
+    "https://automaticpdfhub.cloud/api/health",
+    "https://automaticpdfhub.cloud/demo.html"
+  ]
+}

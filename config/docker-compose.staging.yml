@@ -1,0 +1,96 @@
+# Docker Compose para ambiente de staging
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hubspot-pdf-staging-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hubspot_pdf_staging_db
+      POSTGRES_USER: staging_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - staging-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hubspot-pdf-staging-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - staging-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+
+  gotenberg:
+    image: gotenberg/gotenberg:7
+    container_name: hubspot-pdf-staging-gotenberg
+    restart: unless-stopped
+    ports:
+      - "3011:3000"
+    networks:
+      - staging-network
+
+  backend:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-backend:${IMAGE_TAG}
+    container_name: hubspot-pdf-staging-backend
+    restart: unless-stopped
+    ports:
+      - "3012:3002"
+    depends_on:
+      - postgres
+      - redis
+      - gotenberg
+    env_file:
+      - ../config/staging.env
+    volumes:
+      - backend_staging_storage:/app/storage
+      - backend_staging_logs:/app/logs
+    networks:
+      - staging-network
+
+  frontend:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-frontend:${IMAGE_TAG}
+    container_name: hubspot-pdf-staging-frontend
+    restart: unless-stopped
+    ports:
+      - "3010:3000"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: https://staging.tudominio.com/api
+      REACT_APP_ENV: staging
+    networks:
+      - staging-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: hubspot-pdf-staging-nginx
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - staging-network
+
+networks:
+  staging-network:
+    driver: bridge
+    name: hubspot-pdf-staging-network
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+  backend_staging_storage:
+  backend_staging_logs:

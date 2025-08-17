@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Constructor de Templates PDF</title>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #33475b;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .variables-panel {
+            width: 350px;
+            background: white;
+            border-left: 1px solid #e0e6ed;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e6ed;
+            background: linear-gradient(135deg, #ff6b35 0%, #007a8c 100%);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e6ed;
+            background: #f8f9fa;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: #dee2e6;
+            margin: 0 8px;
+        }
+        
+        .btn {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .btn:hover {
+            background: #f8f9fa;
+            border-color: #ff6b35;
+        }
+        
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            border-color: #ff6b35;
+        }
+        
+        .btn-primary:hover {
+            background: #e55a2b;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab.active {
+            border-bottom-color: #ff6b35;
+            color: #ff6b35;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-textarea {
+            flex: 1;
+            border: none;
+            padding: 20px;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            background: #fafbfc;
+        }
+        
+        .preview-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .preview-document {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .variables-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        
+        .variables-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .variables-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .properties-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .property-item {
+            padding: 8px 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .property-item:hover {
+            border-color: #ff6b35;
+            background: #fff8f5;
+        }
+        
+        .property-name {
+            font-weight: 500;
+            font-size: 13px;
+            color: #33475b;
+        }
+        
+        .property-variable {
+            font-family: monospace;
+            font-size: 11px;
+            color: #007a8c;
+            background: #e3f2fd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        
+        .current-variables {
+            padding: 20px;
+            border-bottom: 1px solid #e0e6ed;
+            background: #f8f9fa;
+        }
+        
+        .variable-chip {
+            display: inline-flex;
+            align-items: center;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-family: monospace;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .variable-chip:hover {
+            background: #bbdefb;
+        }
+        
+        .variable-chip .remove {
+            margin-left: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .variable-chip .remove:hover {
+            opacity: 1;
+            color: #d32f2f;
+        }
+        
+        .template-samples {
+            padding: 20px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        
+        .sample-btn {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .sample-btn:hover {
+            border-color: #ff6b35;
+            background: #fff8f5;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 20px;
+            font-size: 13px;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .status-bar {
+            padding: 8px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e6ed;
+            font-size: 12px;
+            color: #7c8894;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .icon {
+            font-family: 'Material Icons';
+            font-size: 18px;
+            vertical-align: middle;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .variables-panel {
+                width: 100%;
+                height: 40vh;
+            }
+        }
+        
+        /* Estilos para el contenido del preview */
+        .preview-document h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .preview-document h2 {
+            color: #34495e;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .preview-document table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+        
+        .preview-document th,
+        .preview-document td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .preview-document th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+        
+        .variable-highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Panel del Editor -->
+        <div class="editor-panel">
+            <!-- Header -->
+            <div class="header">
+                <h1>🏗️ Constructor Visual de Templates</h1>
+                <p>Crea documentos PDF profesionales con variables dinámicas de HubSpot</p>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <span style="font-size: 12px; color: #666;">Formato:</span>
+                    <button class="btn" onclick="formatText('bold')" title="Negrita">
+                        <span class="icon">format_bold</span>
+                    </button>
+                    <button class="btn" onclick="formatText('italic')" title="Cursiva">
+                        <span class="icon">format_italic</span>
+                    </button>
+                    <button class="btn" onclick="formatText('underlined')" title="Subrayado">
+                        <span class="icon">format_underlined</span>
+                    </button>
+                </div>
+
+                <div class="toolbar-separator"></div>
+
+                <div class="toolbar-group">
+                    <span style="font-size: 12px; color: #666;">Títulos:</span>
+                    <button class="btn" onclick="formatText('h1')">H1</button>
+                    <button class="btn" onclick="formatText('h2')">H2</button>
+                    <button class="btn" onclick="formatText('h3')">H3</button>
+                </div>
+
+                <div class="toolbar-separator"></div>
+
+                <div class="toolbar-group">
+                    <button class="btn" onclick="insertTable()" title="Insertar Tabla">
+                        <span class="icon">table_chart</span> Tabla
+                    </button>
+                </div>
+
+                <div class="toolbar-separator"></div>
+
+                <div class="toolbar-group">
+                    <button class="btn btn-primary" onclick="saveTemplate()">
+                        <span class="icon">save</span> Guardar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs Editor/Preview -->
+            <div class="tabs">
+                <div class="tab active" id="editor-tab" onclick="switchTab('editor')">
+                    <span class="icon">code</span>
+                    Editor HTML
+                </div>
+                <div class="tab" id="preview-tab" onclick="switchTab('preview')">
+                    <span class="icon">visibility</span>
+                    Vista Previa
+                </div>
+            </div>
+
+            <!-- Contenido del editor -->
+            <div class="editor-content">
+                <div id="editor-view">
+                    <textarea 
+                        id="editor-textarea" 
+                        class="editor-textarea" 
+                        placeholder="Escribe tu template aquí...
+
+Puedes usar variables de HubSpot como:
+{{contact.firstname}} - Nombre del contacto
+{{deal.amount}} - Valor del deal  
+{{company.name}} - Nombre de la empresa
+
+También puedes usar HTML básico para formato:
+<h1>Título Principal</h1>
+<h2>Subtítulo</h2>
+<p><strong>Texto en negrita</strong></p>
+<p><em>Texto en cursiva</em></p>
+
+¡Selecciona un template de ejemplo del panel derecho para empezar!"
+                    ></textarea>
+                </div>
+
+                <div id="preview-view" style="display: none;">
+                    <div class="preview-content">
+                        <div class="alert alert-info">
+                            <strong>Vista previa con datos simulados de HubSpot</strong><br>
+                            En la versión real se conectará automáticamente con tus datos.
+                        </div>
+                        
+                        <div class="preview-document" id="preview-document">
+                            <p style="color: #999; text-align: center; font-style: italic;">
+                                Escribe contenido en el editor para ver la vista previa...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status bar -->
+            <div class="status-bar">
+                <span>
+                    Caracteres: <span id="char-count">0</span> | 
+                    Variables: <span id="var-count">0</span> |
+                    Líneas: <span id="line-count">1</span>
+                </span>
+                <span>🧪 Modo Demo - Datos Simulados</span>
+            </div>
+        </div>
+
+        <!-- Panel de Variables -->
+        <div class="variables-panel">
+            <!-- Header del panel -->
+            <div class="variables-header">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+                    🧩 Variables Disponibles
+                </h3>
+                <p style="font-size: 12px; color: #7c8894;">
+                    Haz clic para insertar en el template
+                </p>
+            </div>
+
+            <!-- Variables actuales -->
+            <div class="current-variables">
+                <div class="section-title" style="font-size: 13px; margin-bottom: 8px;">
+                    Variables en uso:
+                </div>
+                <div id="current-variables-list">
+                    <span style="color: #999; font-size: 12px;">Ninguna variable agregada aún</span>
+                </div>
+            </div>
+
+            <!-- Templates de ejemplo -->
+            <div class="template-samples">
+                <div class="section-title">
+                    📄 Templates de Ejemplo
+                </div>
+                
+                <button class="sample-btn" onclick="loadSample('contract')">
+                    <strong>📄 Contrato de Servicios</strong><br>
+                    <small style="color: #666;">Contrato profesional con datos del cliente y proyecto</small>
+                </button>
+                
+                <button class="sample-btn" onclick="loadSample('proposal')">
+                    <strong>📋 Propuesta Comercial</strong><br>
+                    <small style="color: #666;">Propuesta formal con detalles del deal</small>
+                </button>
+                
+                <button class="sample-btn" onclick="loadSample('invoice')">
+                    <strong>🧾 Factura</strong><br>
+                    <small style="color: #666;">Factura con tabla de conceptos</small>
+                </button>
+            </div>
+
+            <!-- Variables por categoría -->
+            <div class="variables-content">
+                <!-- Contactos -->
+                <div class="variables-section">
+                    <div class="section-title">
+                        <span class="icon" style="color: #2196f3;">person</span>
+                        Contactos
+                    </div>
+                    <div class="properties-list" id="contact-properties">
+                        <!-- Se llenarán con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Deals -->
+                <div class="variables-section">
+                    <div class="section-title">
+                        <span class="icon" style="color: #4caf50;">attach_money</span>
+                        Deals
+                    </div>
+                    <div class="properties-list" id="deal-properties">
+                        <!-- Se llenarán con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Empresas -->
+                <div class="variables-section">
+                    <div class="section-title">
+                        <span class="icon" style="color: #9c27b0;">business</span>
+                        Empresas
+                    </div>
+                    <div class="properties-list" id="company-properties">
+                        <!-- Se llenarán con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Variables personalizadas -->
+                <div class="variables-section">
+                    <div class="section-title">
+                        <span class="icon" style="color: #ff9800;">code</span>
+                        Personalizadas
+                    </div>
+                    <div class="properties-list">
+                        <div class="property-item" onclick="insertVariable('current_date')">
+                            <div class="property-name">Fecha Actual</div>
+                            <div class="property-variable">{{current_date}}</div>
+                        </div>
+                        <div class="property-item" onclick="insertVariable('current_year')">
+                            <div class="property-name">Año Actual</div>
+                            <div class="property-variable">{{current_year}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentVariables = new Set();
+        let activeTab = 'editor';
+
+        // Datos simulados de HubSpot
+        const simulatedProperties = {
+            contacts: [
+                { name: 'firstname', label: 'Nombre' },
+                { name: 'lastname', label: 'Apellido' },
+                { name: 'email', label: 'Email' },
+                { name: 'phone', label: 'Teléfono' },
+                { name: 'company', label: 'Empresa' },
+                { name: 'jobtitle', label: 'Cargo' },
+                { name: 'city', label: 'Ciudad' },
+                { name: 'country', label: 'País' },
+                { name: 'website', label: 'Sitio Web' },
+                { name: 'address', label: 'Dirección' },
+            ],
+            deals: [
+                { name: 'dealname', label: 'Nombre del Deal' },
+                { name: 'amount', label: 'Valor' },
+                { name: 'dealstage', label: 'Etapa' },
+                { name: 'pipeline', label: 'Pipeline' },
+                { name: 'closedate', label: 'Fecha de Cierre' },
+                { name: 'deal_currency_code', label: 'Moneda' },
+                { name: 'dealtype', label: 'Tipo de Deal' },
+                { name: 'description', label: 'Descripción' },
+            ],
+            companies: [
+                { name: 'name', label: 'Nombre de la Empresa' },
+                { name: 'domain', label: 'Dominio' },
+                { name: 'industry', label: 'Industria' },
+                { name: 'phone', label: 'Teléfono' },
+                { name: 'city', label: 'Ciudad' },
+                { name: 'state', label: 'Estado' },
+                { name: 'country', label: 'País' },
+                { name: 'website', label: 'Sitio Web' },
+                { name: 'description', label: 'Descripción' },
+            ]
+        };
+
+        // Datos para reemplazo en preview
+        const simulatedData = {
+            'contact.firstname': 'Juan',
+            'contact.lastname': 'Pérez',
+            'contact.email': 'juan.perez@example.com',
+            'contact.phone': '+52 55 1234 5678',
+            'contact.company': 'Innovaciones Tecnológicas S.A.',
+            'contact.jobtitle': 'Director de Tecnología',
+            'contact.city': 'Ciudad de México',
+            'contact.country': 'México',
+            'deal.dealname': 'Proyecto Digitalización 2024',
+            'deal.amount': '150,000',
+            'deal.deal_currency_code': 'MXN',
+            'deal.closedate': '2024-03-15',
+            'deal.dealstage': 'Propuesta Enviada',
+            'deal.pipeline': 'Ventas Principal',
+            'company.name': 'Innovaciones Tecnológicas S.A.',
+            'company.domain': 'innovtech.mx',
+            'company.industry': 'Tecnología',
+            'company.phone': '+52 55 9876 5432',
+            'company.city': 'Ciudad de México',
+            'current_date': new Date().toLocaleDateString('es-MX'),
+            'current_year': new Date().getFullYear().toString(),
+        };
+
+        // Templates de ejemplo
+        const sampleTemplates = {
+            contract: `<h1>CONTRATO DE SERVICIOS</h1>
+
+<p><strong>Fecha:</strong> {{current_date}}</p>
+
+<h2>DATOS DEL CLIENTE</h2>
+<p><strong>Nombre:</strong> {{contact.firstname}} {{contact.lastname}}</p>
+<p><strong>Email:</strong> {{contact.email}}</p>
+<p><strong>Teléfono:</strong> {{contact.phone}}</p>
+<p><strong>Empresa:</strong> {{company.name}}</p>
+
+<h2>DATOS DEL PROYECTO</h2>
+<p><strong>Nombre del Proyecto:</strong> {{deal.dealname}}</p>
+<p><strong>Valor del Contrato:</strong> ${{deal.amount}} {{deal.deal_currency_code}}</p>
+<p><strong>Fecha de Cierre:</strong> {{deal.closedate}}</p>
+
+<h2>TÉRMINOS Y CONDICIONES</h2>
+<p>Este contrato establece los términos y condiciones para la prestación de servicios tecnológicos entre <strong>{{company.name}}</strong> y nuestra empresa.</p>
+
+<p>El proyecto <strong>{{deal.dealname}}</strong> se desarrollará conforme a las especificaciones acordadas, con un valor total de <strong>${{deal.amount}} {{deal.deal_currency_code}}</strong>.</p>
+
+<h3>RESPONSABILIDADES DEL CLIENTE</h3>
+<p>El cliente ({{contact.firstname}} {{contact.lastname}}) se compromete a proporcionar toda la información necesaria para el desarrollo del proyecto.</p>
+
+<div style="margin-top: 50px;">
+    <p>_______________________</p>
+    <p><strong>Firma del Cliente</strong></p>
+    <p>{{contact.firstname}} {{contact.lastname}}</p>
+    <p>{{contact.company}}</p>
+</div>`,
+
+            proposal: `<div style="text-align: center; margin-bottom: 30px;">
+    <h1>PROPUESTA COMERCIAL</h1>
+    <p style="color: #666; font-size: 16px;">Propuesta para {{company.name}}</p>
+</div>
+
+<h2>Estimado(a) {{contact.firstname}},</h2>
+
+<p>Gracias por su interés en nuestros servicios. A continuación presentamos nuestra propuesta personalizada para <strong>{{company.name}}</strong>:</p>
+
+<h3>RESUMEN DEL PROYECTO</h3>
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: #f0f0f0;">
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Detalle</th>
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Información</th>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Proyecto</strong></td>
+        <td style="border: 1px solid #ddd; padding: 12px;">{{deal.dealname}}</td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Empresa</strong></td>
+        <td style="border: 1px solid #ddd; padding: 12px;">{{company.name}}</td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Industria</strong></td>
+        <td style="border: 1px solid #ddd; padding: 12px;">{{company.industry}}</td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Contacto</strong></td>
+        <td style="border: 1px solid #ddd; padding: 12px;">{{contact.firstname}} {{contact.lastname}} ({{contact.email}})</td>
+    </tr>
+</table>
+
+<h3>INVERSIÓN</h3>
+<p style="font-size: 18px; background: #f8f9fa; padding: 16px; border-left: 4px solid #ff6b35;">
+    <strong>Valor Total: ${{deal.amount}} {{deal.deal_currency_code}}</strong>
+</p>
+
+<p><strong>Fecha estimada de cierre:</strong> {{deal.closedate}}</p>
+
+<h3>SIGUIENTE PASO</h3>
+<p>Para proceder con esta propuesta, favor de contactarnos:</p>
+<p><strong>Email:</strong> {{contact.email}}</p>
+<p><strong>Teléfono:</strong> {{contact.phone}}</p>
+
+<p style="margin-top: 40px; text-align: center;">
+    <em>Esperamos poder colaborar con {{company.name}} en este emocionante proyecto.</em>
+</p>
+
+<p style="text-align: right; margin-top: 30px;">
+    <strong>Atentamente,</strong><br>
+    El Equipo Comercial<br>
+    {{current_date}}
+</p>`,
+
+            invoice: `<div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ff6b35; padding-bottom: 20px;">
+    <div>
+        <h1 style="color: #ff6b35;">FACTURA</h1>
+        <p><strong>Fecha:</strong> {{current_date}}</p>
+        <p><strong>Año:</strong> {{current_year}}</p>
+    </div>
+    <div style="text-align: right;">
+        <p><strong>Tu Empresa S.A. de C.V.</strong></p>
+        <p>RFC: ABC123456789</p>
+        <p>contacto@tuempresa.com</p>
+        <p>+52 55 0000 0000</p>
+    </div>
+</div>
+
+<h2>FACTURAR A:</h2>
+<div style="background: #f8f9fa; padding: 16px; border-radius: 6px; margin-bottom: 20px;">
+    <p><strong>{{company.name}}</strong></p>
+    <p>{{company.address}}</p>
+    <p>{{company.city}}, {{company.state}}</p>
+    <p>{{company.country}}</p>
+    <p><strong>Contacto:</strong> {{contact.firstname}} {{contact.lastname}}</p>
+    <p><strong>Email:</strong> {{contact.email}} | <strong>Tel:</strong> {{contact.phone}}</p>
+</div>
+
+<h2>DETALLES DE FACTURACIÓN:</h2>
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: #f0f0f0;">
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Concepto</th>
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Cantidad</th>
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: right;">Importe</th>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;">
+            <strong>{{deal.dealname}}</strong><br>
+            <small style="color: #666;">Servicios profesionales especializados</small>
+        </td>
+        <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">1</td>
+        <td style="border: 1px solid #ddd; padding: 12px; text-align: right;">${{deal.amount}} {{deal.deal_currency_code}}</td>
+    </tr>
+    <tr style="background: #f8f9fa;">
+        <td colspan="2" style="border: 1px solid #ddd; padding: 12px; text-align: right;"><strong>TOTAL:</strong></td>
+        <td style="border: 1px solid #ddd; padding: 12px; text-align: right; font-size: 18px;"><strong>${{deal.amount}} {{deal.deal_currency_code}}</strong></td>
+    </tr>
+</table>
+
+<div style="margin-top: 40px; padding: 16px; background: #e3f2fd; border-radius: 6px;">
+    <p><strong>Instrucciones de Pago:</strong></p>
+    <p>• Transferencia bancaria a la cuenta: XXXX-XXXX-XXXX-XXXX</p>
+    <p>• Referencia: {{deal.dealname}} - {{company.name}}</p>
+    <p>• Fecha límite de pago: 30 días a partir de la fecha de esta factura</p>
+</div>
+
+<p style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
+    Gracias por elegir nuestros servicios, {{contact.firstname}}!
+</p>`
+        };
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProperties();
+            setupEventListeners();
+            updateStats();
+        });
+
+        function renderProperties() {
+            // Renderizar propiedades de contactos
+            const contactContainer = document.getElementById('contact-properties');
+            contactContainer.innerHTML = simulatedProperties.contacts.map(prop => `
+                <div class="property-item" onclick="insertVariable('contact.${prop.name}')">
+                    <div class="property-name">${prop.label}</div>
+                    <div class="property-variable">{{contact.${prop.name}}}</div>
+                </div>
+            `).join('');
+
+            // Renderizar propiedades de deals
+            const dealContainer = document.getElementById('deal-properties');
+            dealContainer.innerHTML = simulatedProperties.deals.map(prop => `
+                <div class="property-item" onclick="insertVariable('deal.${prop.name}')">
+                    <div class="property-name">${prop.label}</div>
+                    <div class="property-variable">{{deal.${prop.name}}}</div>
+                </div>
+            `).join('');
+
+            // Renderizar propiedades de empresas
+            const companyContainer = document.getElementById('company-properties');
+            companyContainer.innerHTML = simulatedProperties.companies.map(prop => `
+                <div class="property-item" onclick="insertVariable('company.${prop.name}')">
+                    <div class="property-name">${prop.label}</div>
+                    <div class="property-variable">{{company.${prop.name}}}</div>
+                </div>
+            `).join('');
+        }
+
+        function setupEventListeners() {
+            const textarea = document.getElementById('editor-textarea');
+            
+            textarea.addEventListener('input', function() {
+                updateStats();
+                if (activeTab === 'preview') {
+                    updatePreview();
+                }
+            });
+
+            textarea.addEventListener('keydown', function(e) {
+                // Atajos de teclado
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case 's':
+                            e.preventDefault();
+                            saveTemplate();
+                            break;
+                        case 'b':
+                            e.preventDefault();
+                            formatText('bold');
+                            break;
+                    }
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            
+            // UI: Actualizar tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            // UI: Mostrar/ocultar contenido
+            if (tab === 'editor') {
+                document.getElementById('editor-view').style.display = 'flex';
+                document.getElementById('preview-view').style.display = 'none';
+            } else {
+                document.getElementById('editor-view').style.display = 'none';
+                document.getElementById('preview-view').style.display = 'flex';
+                updatePreview();
+            }
+        }
+
+        function insertVariable(variableName) {
+            const textarea = document.getElementById('editor-textarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            
+            const variableText = `{{${variableName}}}`;
+            const currentContent = textarea.value;
+            
+            const newContent = 
+                currentContent.substring(0, start) + 
+                variableText + 
+                currentContent.substring(end);
+            
+            textarea.value = newContent;
+            
+            // Agregar a variables actuales
+            currentVariables.add(variableName);
+            updateCurrentVariables();
+            updateStats();
+            
+            // Restaurar foco y posición del cursor
+            textarea.focus();
+            const newPosition = start + variableText.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+            
+            console.log(`📝 Variable insertada: {{${variableName}}}`);
+        }
+
+        function loadSample(sampleKey) {
+            const textarea = document.getElementById('editor-textarea');
+            textarea.value = sampleTemplates[sampleKey];
+            
+            // Extraer variables del template
+            extractVariablesFromContent(sampleTemplates[sampleKey]);
+            updateCurrentVariables();
+            updateStats();
+            
+            if (activeTab === 'preview') {
+                updatePreview();
+            }
+            
+            console.log(`📄 Template de ejemplo cargado: ${sampleKey}`);
+        }
+
+        function extractVariablesFromContent(content) {
+            const variableRegex = /\{\{([^}]+)\}\}/g;
+            let match;
+            
+            currentVariables.clear();
+            
+            while ((match = variableRegex.exec(content)) !== null) {
+                const variableName = match[1].trim();
+                currentVariables.add(variableName);
+            }
+        }
+
+        function updateCurrentVariables() {
+            const container = document.getElementById('current-variables-list');
+            
+            if (currentVariables.size === 0) {
+                container.innerHTML = '<span style="color: #999; font-size: 12px;">Ninguna variable agregada aún</span>';
+                return;
+            }
+
+            const variablesHtml = Array.from(currentVariables).map(varName => `
+                <span class="variable-chip" onclick="insertVariable('${varName}')">
+                    {{${varName}}}
+                    <span class="remove" onclick="event.stopPropagation(); removeVariable('${varName}')">&times;</span>
+                </span>
+            `).join('');
+
+            container.innerHTML = variablesHtml;
+        }
+
+        function removeVariable(variableName) {
+            currentVariables.delete(variableName);
+            updateCurrentVariables();
+            updateStats();
+            console.log(`🗑️ Variable removida: {{${variableName}}}`);
+        }
+
+        function formatText(format) {
+            const textarea = document.getElementById('editor-textarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+
+            if (!selectedText) {
+                alert('Selecciona texto primero para aplicar formato');
+                return;
+            }
+
+            let formattedText = '';
+            
+            switch(format) {
+                case 'bold':
+                    formattedText = `<strong>${selectedText}</strong>`;
+                    break;
+                case 'italic':
+                    formattedText = `<em>${selectedText}</em>`;
+                    break;
+                case 'underlined':
+                    formattedText = `<u>${selectedText}</u>`;
+                    break;
+                case 'h1':
+                    formattedText = `<h1>${selectedText}</h1>`;
+                    break;
+                case 'h2':
+                    formattedText = `<h2>${selectedText}</h2>`;
+                    break;
+                case 'h3':
+                    formattedText = `<h3>${selectedText}</h3>`;
+                    break;
+            }
+
+            const newContent = 
+                textarea.value.substring(0, start) + 
+                formattedText + 
+                textarea.value.substring(end);
+            
+            textarea.value = newContent;
+            updateStats();
+            
+            if (activeTab === 'preview') {
+                updatePreview();
+            }
+        }
+
+        function insertTable() {
+            const tableHtml = `
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: #f0f0f0;">
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Concepto</th>
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Descripción</th>
+        <th style="border: 1px solid #ddd; padding: 12px; text-align: right;">Valor</th>
+    </tr>
+    <tr>
+        <td style="border: 1px solid #ddd; padding: 12px;">{{deal.dealname}}</td>
+        <td style="border: 1px solid #ddd; padding: 12px;">Servicios profesionales</td>
+        <td style="border: 1px solid #ddd; padding: 12px; text-align: right;">${{deal.amount}} {{deal.deal_currency_code}}</td>
+    </tr>
+</table>`;
+
+            insertAtCursor(tableHtml);
+        }
+
+        function insertAtCursor(text) {
+            const textarea = document.getElementById('editor-textarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            
+            const newContent = 
+                textarea.value.substring(0, start) + 
+                text + 
+                textarea.value.substring(end);
+            
+            textarea.value = newContent;
+            
+            // Extraer variables nuevas
+            extractVariablesFromContent(newContent);
+            updateCurrentVariables();
+            updateStats();
+
+            // Restaurar foco
+            textarea.focus();
+            const newPosition = start + text.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+        }
+
+        function updatePreview() {
+            const content = document.getElementById('editor-textarea').value;
+            let processedContent = content;
+
+            // Reemplazar variables con datos simulados
+            Object.entries(simulatedData).forEach(([variable, value]) => {
+                const regex = new RegExp(`\\{\\{\\s*${variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\}\\}`, 'g');
+                processedContent = processedContent.replace(regex, `<span class="variable-highlight" title="Variable: ${variable}">${value}</span>`);
+            });
+
+            // Resaltar variables no encontradas
+            processedContent = processedContent.replace(/\{\{[^}]*\}\}/g, 
+                '<span style="background: #ffeb3b; padding: 2px 4px; border-radius: 2px; font-size: 11px; color: #e65100;">[Variable no resuelta]</span>'
+            );
+
+            const previewDoc = document.getElementById('preview-document');
+            previewDoc.innerHTML = processedContent || '<p style="color: #999; text-align: center; font-style: italic;">Escribe contenido en el editor para ver la vista previa...</p>';
+        }
+
+        function updateStats() {
+            const content = document.getElementById('editor-textarea').value;
+            
+            document.getElementById('char-count').textContent = content.length;
+            document.getElementById('var-count').textContent = currentVariables.size;
+            document.getElementById('line-count').textContent = (content.match(/\n/g) || []).length + 1;
+            
+            // Extraer variables del contenido actual
+            extractVariablesFromContent(content);
+        }
+
+        function saveTemplate() {
+            const content = document.getElementById('editor-textarea').value;
+            
+            if (!content.trim()) {
+                alert('❌ El template está vacío. Agrega contenido primero.');
+                return;
+            }
+
+            const templateData = {
+                name: prompt('Nombre del template:', 'Mi Template Personalizado'),
+                content: content,
+                variables: Array.from(currentVariables),
+                timestamp: new Date().toISOString(),
+            };
+
+            if (!templateData.name) return;
+
+            // Simular guardado
+            console.log('💾 Guardando template:', templateData);
+            
+            // Descargar como archivo JSON para demostración
+            const blob = new Blob([JSON.stringify(templateData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${templateData.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`✅ Template "${templateData.name}" guardado como archivo JSON.\n\n📊 Estadísticas:\n• ${content.length} caracteres\n• ${currentVariables.size} variables\n• ${(content.match(/\n/g) || []).length + 1} líneas`);
+        }
+
+        // Inicializar con un mensaje de bienvenida
+        window.addEventListener('load', function() {
+            const welcomeMessage = `<div style="text-align: center; padding: 40px; border: 2px dashed #ff6b35; border-radius: 8px; margin: 20px; background: #fff8f5;">
+    <h2 style="color: #ff6b35; margin-bottom: 16px;">🎉 ¡Bienvenido al Constructor Visual!</h2>
+    
+    <p style="margin-bottom: 20px; color: #666;">
+        Este es el <strong>editor avanzado de templates</strong> con propiedades simuladas de HubSpot.
+    </p>
+    
+    <h3 style="color: #007a8c; margin-bottom: 12px;">🚀 Para empezar:</h3>
+    <p style="text-align: left; max-width: 400px; margin: 0 auto;">
+        1. 📄 <strong>Selecciona un template de ejemplo</strong> del panel derecho<br>
+        2. 🧩 <strong>Agrega variables</strong> haciendo clic en las propiedades<br>
+        3. ✏️ <strong>Personaliza el contenido</strong> con HTML básico<br>
+        4. 👁️ <strong>Ve la vista previa</strong> en tiempo real<br>
+        5. 💾 <strong>Guarda tu template</strong> cuando esté listo
+    </p>
+    
+    <div style="margin-top: 20px; padding: 12px; background: #e3f2fd; border-radius: 6px;">
+        <small style="color: #1976d2;">
+            💡 <strong>Tip:</strong> En la versión real, las variables se conectarán automáticamente 
+            con los datos reales de tu cuenta de HubSpot.
+        </small>
+    </div>
+</div>`;
+
+            setTimeout(() => {
+                document.getElementById('editor-textarea').value = welcomeMessage;
+                updateStats();
+            }, 500);
+        });
+
+        console.log('🏗️ Constructor Visual de Templates cargado exitosamente!');
+        console.log('📍 Navega a: http://localhost:3000/templates/builder');
+        console.log('🧪 Modo: Demostración con datos simulados');
+    </script>
+</body>
+</html>

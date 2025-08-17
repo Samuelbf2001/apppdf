@@ -1,0 +1,86 @@
+# Docker Compose para desarrollo - Solo servicios esenciales
+# Usar: docker-compose -f docker-compose.dev.yml up -d
+
+version: '3.8'
+
+services:
+  # =====================================
+  # PostgreSQL para desarrollo
+  # =====================================
+  postgres:
+    image: postgres:15
+    container_name: hubspot-pdf-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hubspot_pdf_db
+      POSTGRES_USER: hubspot_user
+      POSTGRES_PASSWORD: hubspot_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - hubspot-dev-network
+
+  # =====================================
+  # Redis para desarrollo
+  # =====================================
+  redis:
+    image: redis:7-alpine
+    container_name: hubspot-pdf-dev-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - hubspot-dev-network
+    command: redis-server --appendonly yes
+
+  # =====================================
+  # Gotenberg para desarrollo
+  # =====================================
+  gotenberg:
+    image: gotenberg/gotenberg:7
+    container_name: hubspot-pdf-dev-gotenberg
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    networks:
+      - hubspot-dev-network
+    command:
+      - "gotenberg"
+      - "--chromium-disable-web-security"
+      - "--chromium-allow-file-access-from-files"
+      - "--chromium-disable-javascript"
+      - "--chromium-allow-insecure-localhost"
+      - "--chromium-ignore-certificate-errors"
+    environment:
+      - GOTENBERG_LOG_LEVEL=DEBUG
+
+  # =====================================
+  # Herramientas opcionales
+  # =====================================
+  adminer:
+    image: adminer
+    container_name: hubspot-pdf-dev-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    networks:
+      - hubspot-dev-network
+    profiles:
+      - tools
+
+networks:
+  hubspot-dev-network:
+    driver: bridge
+    name: hubspot-pdf-dev-network
+
+volumes:
+  postgres_dev_data:
+    name: hubspot-pdf-dev-postgres-data
+  redis_dev_data:
+    name: hubspot-pdf-dev-redis-data

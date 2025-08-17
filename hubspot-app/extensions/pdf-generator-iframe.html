@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Generator - Vista de Template</title>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #33475b;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #007a8c 100%);
+            color: white;
+            padding: 16px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .content {
+            padding: 20px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+            padding: 16px;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            background: #fff;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #33475b;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title .icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd6e2;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+        }
+        
+        .template-item {
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .template-item:hover {
+            border-color: #ff6b35;
+            box-shadow: 0 2px 4px rgba(255, 107, 53, 0.1);
+        }
+        
+        .template-item.selected {
+            border-color: #ff6b35;
+            background: #fff8f5;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
+        }
+        
+        .template-name {
+            font-weight: 600;
+            color: #33475b;
+            margin-bottom: 4px;
+        }
+        
+        .template-description {
+            font-size: 12px;
+            color: #7c8894;
+            margin-bottom: 8px;
+        }
+        
+        .template-meta {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .variables-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .variable-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-family: monospace;
+        }
+        
+        .checkbox-group {
+            margin: 8px 0;
+        }
+        
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            background: #e55a2b;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ffcc02;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7c8894;
+        }
+        
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #ff6b35;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .actions {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-top: 1px solid #e0e6ed;
+            text-align: right;
+        }
+        
+        .object-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+        
+        .object-info strong {
+            color: #33475b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📄 Configurar Generación de PDF</h1>
+            <p>Configura cómo se generará el documento automáticamente</p>
+        </div>
+
+        <!-- Loading inicial -->
+        <div id="initial-loading" class="loading">
+            <div class="spinner"></div>
+            <p>Inicializando configuración...</p>
+        </div>
+
+        <!-- Contenido principal -->
+        <div id="main-content" class="content hidden">
+            <!-- Información del contexto -->
+            <div id="context-section" class="section">
+                <div class="section-title">
+                    <span class="icon">🎯</span>
+                    Contexto del Workflow
+                </div>
+                <div id="object-info" class="object-info">
+                    <div>Tipo de objeto: <strong id="object-type">-</strong></div>
+                    <div>ID del objeto: <strong id="object-id">-</strong></div>
+                    <div>Propiedades disponibles: <strong id="properties-count">-</strong></div>
+                </div>
+            </div>
+
+            <!-- Selección de template -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">📝</span>
+                    1. Seleccionar Template
+                </div>
+                
+                <div id="templates-loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Cargando templates disponibles...</p>
+                </div>
+                
+                <div id="templates-list" class="hidden">
+                    <!-- Templates se cargarán aquí -->
+                </div>
+                
+                <div id="no-templates" class="hidden">
+                    <div class="alert alert-warning">
+                        <strong>No hay templates disponibles</strong><br>
+                        Primero debes crear templates en la aplicación.
+                        <br><br>
+                        <a href="#" onclick="openTemplateManager()" style="color: #ff6b35;">
+                            🚀 Ir al gestor de templates
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración del documento -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">⚙️</span>
+                    2. Configurar Documento
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <label for="document-name" style="font-size: 13px; font-weight: 500; margin-bottom: 4px; display: block;">
+                        Nombre del Documento
+                    </label>
+                    <input 
+                        type="text" 
+                        id="document-name" 
+                        class="form-control"
+                        placeholder="Documento - {{contact.firstname}} {{contact.lastname}}"
+                    >
+                    <small style="color: #7c8894; font-size: 11px;">
+                        Usa variables como {{contact.firstname}}, {{deal.amount}}, {{company.name}}
+                    </small>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="attach-to-object" checked>
+                        Adjuntar PDF automáticamente al objeto
+                    </label>
+                    
+                    <label>
+                        <input type="checkbox" id="send-notification">
+                        Enviar notificación por email cuando esté listo
+                    </label>
+                </div>
+
+                <div id="notification-email-group" class="hidden" style="margin-top: 12px;">
+                    <label for="notification-email" style="font-size: 13px; font-weight: 500; margin-bottom: 4px; display: block;">
+                        Email de Notificación
+                    </label>
+                    <input 
+                        type="email" 
+                        id="notification-email" 
+                        class="form-control"
+                        placeholder="admin@empresa.com"
+                    >
+                </div>
+            </div>
+
+            <!-- Preview del template -->
+            <div id="template-preview-section" class="section hidden">
+                <div class="section-title">
+                    <span class="icon">👁️</span>
+                    Vista Previa del Template
+                </div>
+                
+                <div id="template-info">
+                    <!-- Información del template se mostrará aquí -->
+                </div>
+                
+                <div id="variables-info" style="margin-top: 12px;">
+                    <!-- Variables del template se mostrarán aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions footer -->
+        <div id="actions-footer" class="actions hidden">
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                🔄 Resetear
+            </button>
+            <button type="button" class="btn" onclick="testConfiguration()" id="test-btn">
+                🧪 Probar
+            </button>
+            <button type="button" class="btn" onclick="saveConfiguration()" id="save-btn">
+                💾 Guardar
+            </button>
+        </div>
+    </div>
+
+    <!-- HubSpot Extensions SDK -->
+    <script src="https://static.hsappstatic.net/extensions-sdk/v1/extensions-sdk.js"></script>
+    
+    <script>
+        // Variables globales
+        let hubspot;
+        let templates = [];
+        let selectedTemplate = null;
+        let objectContext = null;
+        let portalId = null;
+
+        // Inicializar cuando cargue
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        async function initialize() {
+            try {
+                console.log('🚀 Inicializando iframe de configuración...');
+                
+                // Inicializar SDK de HubSpot
+                if (window.HubSpotExtensions) {
+                    hubspot = await window.HubSpotExtensions.init();
+                } else {
+                    throw new Error('HubSpot Extensions SDK no disponible');
+                }
+
+                // Obtener contexto
+                await loadContext();
+                
+                // Cargar templates
+                await loadTemplates();
+                
+                // Configurar eventos
+                setupEventListeners();
+                
+                // Cargar configuración existente
+                await loadExistingConfig();
+
+                // Mostrar contenido
+                hideElement('initial-loading');
+                showElement('main-content');
+                showElement('actions-footer');
+
+                console.log('✅ Inicialización completada');
+
+            } catch (error) {
+                console.error('❌ Error en inicialización:', error);
+                showError('Error inicializando la configuración: ' + error.message);
+            }
+        }
+
+        async function loadContext() {
+            try {
+                // Obtener contexto del workflow/objeto
+                const context = await hubspot.context.getContext();
+                objectContext = context;
+                portalId = context.portalId;
+
+                console.log('📋 Contexto cargado:', context);
+
+                // Actualizar UI con información del contexto
+                document.getElementById('object-type').textContent = 
+                    getObjectTypeLabel(context.objectType);
+                document.getElementById('object-id').textContent = context.objectId || 'N/A';
+                
+                // Contar propiedades disponibles
+                const propertiesCount = Object.keys(context.object?.properties || {}).length;
+                document.getElementById('properties-count').textContent = propertiesCount;
+
+            } catch (error) {
+                console.error('Error cargando contexto:', error);
+                objectContext = { objectType: 'CONTACT', objectId: 'unknown' };
+            }
+        }
+
+        async function loadTemplates() {
+            try {
+                showElement('templates-loading');
+                hideElement('templates-list');
+                hideElement('no-templates');
+
+                console.log('📝 Cargando templates para portal:', portalId);
+
+                // Obtener templates del portal
+                const response = await fetch(
+                    `${getApiUrl()}/api/hubspot/workflow-actions/templates/${portalId}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                templates = data.data || [];
+
+                console.log(`📊 ${templates.length} templates cargados`);
+
+                if (templates.length === 0) {
+                    hideElement('templates-loading');
+                    showElement('no-templates');
+                } else {
+                    renderTemplates();
+                    hideElement('templates-loading');
+                    showElement('templates-list');
+                }
+
+            } catch (error) {
+                console.error('Error cargando templates:', error);
+                hideElement('templates-loading');
+                showError('Error cargando templates. Verifica la conexión.');
+            }
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById('templates-list');
+            
+            const templatesHtml = templates.map(template => `
+                <div class="template-item" data-template-id="${template.id}" onclick="selectTemplate('${template.id}')">
+                    <div class="template-name">${template.name}</div>
+                    ${template.description ? `<div class="template-description">${template.description}</div>` : ''}
+                    <div class="template-meta">
+                        ${template.variables.length} variables • 
+                        ${template._count.documents} documentos generados
+                    </div>
+                    <div class="variables-preview">
+                        ${template.variables.slice(0, 5).map(v => 
+                            `<span class="variable-tag">{{${v.name}}}</span>`
+                        ).join('')}
+                        ${template.variables.length > 5 ? '<span class="variable-tag">...</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = templatesHtml;
+        }
+
+        function selectTemplate(templateId) {
+            console.log('📄 Seleccionando template:', templateId);
+
+            // UI: Remover selección anterior
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // UI: Seleccionar nuevo
+            const selectedItem = document.querySelector(`[data-template-id="${templateId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+
+            // Guardar template seleccionado
+            selectedTemplate = templates.find(t => t.id === templateId);
+            
+            if (selectedTemplate) {
+                showTemplatePreview();
+                updateDocumentNameSuggestion();
+            }
+        }
+
+        function showTemplatePreview() {
+            if (!selectedTemplate) return;
+
+            const templateInfo = `
+                <div style="font-size: 13px;">
+                    <strong>${selectedTemplate.name}</strong><br>
+                    ${selectedTemplate.description || 'Sin descripción'}<br>
+                    <small style="color: #7c8894;">
+                        ${selectedTemplate.variables.length} variables configuradas
+                    </small>
+                </div>
+            `;
+
+            const variablesInfo = `
+                <div style="font-size: 12px;">
+                    <strong>Variables que se usarán:</strong><br>
+                    <div style="margin-top: 8px;">
+                        ${selectedTemplate.variables.map(v => 
+                            `<span class="variable-tag" title="${v.label}">{{${v.name}}}</span>`
+                        ).join(' ')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('template-info').innerHTML = templateInfo;
+            document.getElementById('variables-info').innerHTML = variablesInfo;
+            
+            showElement('template-preview-section');
+        }
+
+        function updateDocumentNameSuggestion() {
+            if (!selectedTemplate || !objectContext) return;
+
+            const objectType = objectContext.objectType;
+            const templateName = selectedTemplate.name;
+            
+            let suggestedName = templateName;
+
+            // Agregar variables según el tipo de objeto
+            if (objectType === 'CONTACT') {
+                suggestedName += ' - {{contact.firstname}} {{contact.lastname}}';
+            } else if (objectType === 'DEAL') {
+                suggestedName += ' - {{deal.dealname}}';
+            } else if (objectType === 'COMPANY') {
+                suggestedName += ' - {{company.name}}';
+            }
+
+            document.getElementById('document-name').value = suggestedName;
+        }
+
+        function setupEventListeners() {
+            // Mostrar/ocultar email de notificación
+            document.getElementById('send-notification').addEventListener('change', function(e) {
+                const emailGroup = document.getElementById('notification-email-group');
+                if (e.target.checked) {
+                    showElement('notification-email-group');
+                } else {
+                    hideElement('notification-email-group');
+                }
+            });
+        }
+
+        async function loadExistingConfig() {
+            try {
+                // Intentar cargar configuración existente
+                const existingConfig = await hubspot.actions.getSettings();
+                
+                if (existingConfig) {
+                    console.log('🔄 Cargando configuración existente:', existingConfig);
+                    
+                    // Aplicar configuración
+                    if (existingConfig.templateId) {
+                        setTimeout(() => selectTemplate(existingConfig.templateId), 100);
+                    }
+                    
+                    if (existingConfig.documentName) {
+                        document.getElementById('document-name').value = existingConfig.documentName;
+                    }
+                    
+                    document.getElementById('attach-to-object').checked = 
+                        existingConfig.attachToObject !== false;
+                    
+                    if (existingConfig.notificationEmail) {
+                        document.getElementById('send-notification').checked = true;
+                        document.getElementById('notification-email').value = existingConfig.notificationEmail;
+                        showElement('notification-email-group');
+                    }
+                }
+            } catch (error) {
+                console.log('No hay configuración existente');
+            }
+        }
+
+        async function testConfiguration() {
+            if (!selectedTemplate) {
+                showError('Por favor selecciona un template primero');
+                return;
+            }
+
+            const testBtn = document.getElementById('test-btn');
+            testBtn.disabled = true;
+            testBtn.textContent = '🧪 Probando...';
+
+            try {
+                const config = getConfiguration();
+                
+                // Llamar endpoint de prueba
+                const response = await fetch(`${getApiUrl()}/api/hubspot/workflow-actions/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        templateId: config.templateId,
+                        documentName: config.documentName,
+                        attachToObject: config.attachToObject,
+                        testObjectData: {
+                            objectId: objectContext?.objectId || 'test-123',
+                            objectType: objectContext?.objectType || 'CONTACT',
+                            properties: generateTestProperties(),
+                        },
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la prueba');
+                }
+
+                const result = await response.json();
+                
+                showSuccess(`✅ ¡Prueba exitosa!\n\nTemplate: ${result.data.templateName}\nNombre procesado: "${result.data.processedDocumentName}"\nVariables: ${result.data.variablesCount}\n\nLa configuración funcionará correctamente.`);
+
+            } catch (error) {
+                console.error('Error en prueba:', error);
+                showError('❌ Error en la prueba: ' + error.message);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🧪 Probar';
+            }
+        }
+
+        async function saveConfiguration() {
+            if (!selectedTemplate) {
+                showError('Por favor selecciona un template');
+                return;
+            }
+
+            const documentName = document.getElementById('document-name').value.trim();
+            if (!documentName) {
+                showError('Por favor ingresa un nombre para el documento');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Guardando...';
+
+            try {
+                const config = getConfiguration();
+                
+                // Guardar usando HubSpot SDK
+                await hubspot.actions.saveSettings(config);
+                
+                showSuccess('✅ ¡Configuración guardada!\n\nLa custom action está lista para usar en workflows.');
+
+                // Auto-cerrar después de 2 segundos
+                setTimeout(() => {
+                    if (hubspot.actions.close) {
+                        hubspot.actions.close();
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error guardando:', error);
+                showError('❌ Error guardando configuración: ' + error.message);
+                
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Guardar';
+            }
+        }
+
+        function getConfiguration() {
+            return {
+                templateId: selectedTemplate?.id,
+                templateName: selectedTemplate?.name,
+                documentName: document.getElementById('document-name').value.trim(),
+                attachToObject: document.getElementById('attach-to-object').checked,
+                notificationEmail: document.getElementById('send-notification').checked ? 
+                    document.getElementById('notification-email').value : null,
+            };
+        }
+
+        function resetForm() {
+            // Limpiar selección de template
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            selectedTemplate = null;
+            
+            // Limpiar formulario
+            document.getElementById('document-name').value = '';
+            document.getElementById('attach-to-object').checked = true;
+            document.getElementById('send-notification').checked = false;
+            document.getElementById('notification-email').value = '';
+            
+            // Ocultar secciones
+            hideElement('template-preview-section');
+            hideElement('notification-email-group');
+        }
+
+        function generateTestProperties() {
+            const objectType = objectContext?.objectType || 'CONTACT';
+            
+            if (objectType === 'CONTACT') {
+                return {
+                    firstname: 'Juan',
+                    lastname: 'Pérez',
+                    email: 'juan.perez@ejemplo.com',
+                    phone: '+52 55 1234 5678',
+                    company: 'Empresa Ejemplo S.A.',
+                };
+            } else if (objectType === 'DEAL') {
+                return {
+                    dealname: 'Deal de Ejemplo',
+                    amount: '50000',
+                    dealstage: 'closedwon',
+                    pipeline: 'default',
+                };
+            } else if (objectType === 'COMPANY') {
+                return {
+                    name: 'Empresa Ejemplo S.A.',
+                    domain: 'ejemplo.com',
+                    industry: 'Technology',
+                    phone: '+52 55 9876 5432',
+                };
+            }
+            
+            return {};
+        }
+
+        function openTemplateManager() {
+            const url = `${getFrontendUrl()}/templates`;
+            window.open(url, '_blank');
+        }
+
+        // Funciones helper
+        function getObjectTypeLabel(objectType) {
+            const labels = {
+                'CONTACT': 'Contacto',
+                'DEAL': 'Deal', 
+                'COMPANY': 'Empresa',
+                'TICKET': 'Ticket',
+            };
+            return labels[objectType] || objectType;
+        }
+
+        function getApiUrl() {
+            const hostname = window.location.hostname;
+            if (hostname.includes('localhost')) return 'http://localhost:3002';
+            if (hostname.includes('staging')) return 'https://staging-api.tudominio.com';
+            return 'https://api.tudominio.com';
+        }
+
+        function getFrontendUrl() {
+            const hostname = window.location.hostname;
+            if (hostname.includes('localhost')) return 'http://localhost:3000';
+            if (hostname.includes('staging')) return 'https://staging.tudominio.com';
+            return 'https://tudominio.com';
+        }
+
+        function showElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        }
+
+        function hideElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+
+        function showError(message) {
+            // Crear/mostrar alert de error
+            let alertDiv = document.getElementById('dynamic-alert');
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.id = 'dynamic-alert';
+                document.querySelector('.content').prepend(alertDiv);
+            }
+            
+            alertDiv.className = 'alert alert-error';
+            alertDiv.innerHTML = message;
+            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showSuccess(message) {
+            let alertDiv = document.getElementById('dynamic-alert');
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.id = 'dynamic-alert';
+                document.querySelector('.content').prepend(alertDiv);
+            }
+            
+            alertDiv.className = 'alert alert-success';
+            alertDiv.innerHTML = message.replace(/\n/g, '<br>');
+            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Manejo de errores
+        window.addEventListener('error', function(e) {
+            console.error('Error global:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Promise rejection:', e.reason);
+        });
+    </script>
+</body>
+</html>
