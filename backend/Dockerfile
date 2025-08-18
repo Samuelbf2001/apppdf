@@ -13,7 +13,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Instalar dependencias
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Generar cliente Prisma
 RUN npx prisma generate
@@ -30,7 +30,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Instalar todas las dependencias (incluyendo dev)
-RUN npm ci
+RUN npm install
 
 # Copiar código fuente
 COPY src ./src
@@ -109,7 +109,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Instalar todas las dependencias
-RUN npm ci
+RUN npm install
 
 # Copiar prisma schema
 COPY prisma ./prisma
