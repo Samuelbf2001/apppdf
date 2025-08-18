@@ -34,23 +34,26 @@ ENV CI=true
 # Copiar package files
 COPY package*.json ./
 
-    # Limpiar caché y instalar dependencias (con legacy-peer-deps para resolver conflictos de TypeScript)
-    RUN npm cache clean --force && npm install --legacy-peer-deps
+# Limpiar caché y instalar dependencias (con legacy-peer-deps para resolver conflictos de TypeScript)
+RUN npm cache clean --force && npm install --legacy-peer-deps
 
 # Copiar código fuente
 COPY . .
 
-    # Build de la aplicación (con variables de entorno para resolución de conflictos)
-    ENV DISABLE_ESLINT_PLUGIN=true
-    ENV TSC_COMPILE_ON_ERROR=true  
-    ENV GENERATE_SOURCEMAP=false
-    ENV CI=false
-    RUN npm run build
+# Build de la aplicación (con variables de entorno para resolución de conflictos)
+ENV DISABLE_ESLINT_PLUGIN=true
+ENV TSC_COMPILE_ON_ERROR=true  
+ENV GENERATE_SOURCEMAP=false
+ENV CI=false
+RUN npm run build
 
 # =====================================
 # Stage 2: Production (Nginx)
 # =====================================
 FROM nginx:alpine AS production
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
 
 # Copiar configuración de nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -66,9 +69,9 @@ RUN adduser -S nginx_user -u 1001
 RUN chown -R nginx_user:nginx_group /usr/share/nginx/html
 RUN chmod -R 755 /usr/share/nginx/html
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/ || exit 1
+# Health check mejorado
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
 
 # Exponer puerto
 EXPOSE 80
