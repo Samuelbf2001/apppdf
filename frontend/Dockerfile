@@ -69,12 +69,12 @@ RUN adduser -S nginx_user -u 1001
 RUN chown -R nginx_user:nginx_group /usr/share/nginx/html
 RUN chmod -R 755 /usr/share/nginx/html
 
-# Health check mejorado
+# Health check mejorado para puerto 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD curl -f http://localhost:3001/ || exit 1
 
-# Exponer puerto
-EXPOSE 80
+# Exponer puerto 3001
+EXPOSE 3001
 
 # Comando por defecto
 CMD ["nginx", "-g", "daemon off;"]
