@@ -31,9 +31,11 @@ model Tenant {
   updatedAt   DateTime @updatedAt
   
   // Relaciones
-  users       User[]
-  templates   Template[]
-  documents   Document[]
+  users          User[]
+  templates      Template[]
+  documents      Document[]
+  processingJobs ProcessingJob[]
+  auditLogs      AuditLog[]
   
   @@map("tenants")
 }
