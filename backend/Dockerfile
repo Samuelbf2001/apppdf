@@ -69,8 +69,8 @@ COPY prisma ./prisma
 # Generar cliente Prisma
 RUN npx prisma generate
 
-# Compilar TypeScript
-RUN npm run build
+    # Skip TypeScript compilation - use ts-node directly
+    # RUN npm run build
 
 # =====================================
 # Stage 3: Production (DEFAULT - último stage)
@@ -96,9 +96,10 @@ ENV TZ=America/Mexico_City
 COPY --from=dependencies --chown=hubspot:nodejs /app/node_modules ./node_modules
 COPY --from=dependencies --chown=hubspot:nodejs /app/package*.json ./
 
-# Copiar código compilado
-COPY --from=build --chown=hubspot:nodejs /app/dist ./dist
-COPY --from=build --chown=hubspot:nodejs /app/prisma ./prisma
+    # Copiar código fuente (sin compilar)
+    COPY --from=build --chown=hubspot:nodejs /app/src ./src
+    COPY --from=build --chown=hubspot:nodejs /app/tsconfig.json ./
+    COPY --from=build --chown=hubspot:nodejs /app/prisma ./prisma
 
 # Crear directorios necesarios
 RUN mkdir -p logs storage/documents storage/temp && \

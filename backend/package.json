@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "npx ts-node src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "db:migrate": "npx prisma migrate dev",
