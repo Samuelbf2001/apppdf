@@ -34,8 +34,8 @@ ENV CI=true
 # Copiar package files
 COPY package*.json ./
 
-    # Instalar dependencias (con legacy-peer-deps para resolver conflictos de TypeScript)
-    RUN npm install --legacy-peer-deps
+    # Limpiar caché y instalar dependencias (con legacy-peer-deps para resolver conflictos de TypeScript)
+    RUN npm cache clean --force && npm install --legacy-peer-deps
 
 # Copiar código fuente
 COPY . .
