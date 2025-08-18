@@ -1,0 +1,40 @@
+# Dockerfile simplificado para EasyPanel
+FROM node:18-alpine
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar código fuente
+COPY . .
+
+# Copiar prisma
+COPY prisma ./prisma/
+
+# Generar cliente Prisma
+RUN npx prisma generate
+
+# Compilar TypeScript
+RUN npm run build
+
+# Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Crear directorios necesarios
+RUN mkdir -p /app/storage /app/uploads /app/logs
+RUN chown -R nextjs:nodejs /app/storage /app/uploads /app/logs
+
+# Cambiar a usuario no-root
+USER nextjs
+
+# Exponer puerto
+EXPOSE 3002
+
+# Comando de inicio
+CMD ["npm", "start"]

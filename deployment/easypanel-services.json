@@ -66,7 +66,7 @@
         "FRONTEND_URL": "https://automaticpdfhub.cloud",
         "DATABASE_URL": "postgresql://automaticpdf_user:PASSWORD_POSTGRES@automaticpdf-postgres:5432/automaticpdf_db?schema=public",
         "REDIS_URL": "redis://:PASSWORD_REDIS@automaticpdf-redis:6379",
-        "GOTENBERG_URL": "http://automaticpdf-gotenberg:3000",
+        "GOTENBERG_URL": "http://localhost:30300",
         "HUBSPOT_APP_ID": "18116720",
         "HUBSPOT_CLIENT_ID": "0e22d21f-c6ea-42d5-a7a5-128878342183",
         "HUBSPOT_CLIENT_SECRET": "be54f2da-9879-4e44-b945-82beb7fdb41d", 
