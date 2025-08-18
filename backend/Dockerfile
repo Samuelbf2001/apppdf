@@ -73,7 +73,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # =====================================
-# Stage 3: Production
+# Stage 3: Production (DEFAULT - último stage)
 # =====================================
 FROM node:18-alpine AS production
 
@@ -120,42 +120,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Comando por defecto
 CMD ["npm", "start"]
-
-# =====================================
-# Stage 4: Development
-# =====================================
-FROM node:18-alpine AS development
-
-WORKDIR /app
-
-# Instalar dependencias de sistema para desarrollo
-RUN apk add --no-cache \
-    ca-certificates \
-    git \
-    && rm -rf /var/cache/apk/*
-
-# Copiar package files
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Instalar todas las dependencias
-RUN npm install
-
-# Copiar prisma schema
-COPY prisma ./prisma
-
-# Generar cliente Prisma
-RUN npx prisma generate
-
-# Crear directorios necesarios
-RUN mkdir -p logs storage/documents storage/temp
-
-# Variables de entorno para desarrollo
-ENV NODE_ENV=development
-ENV APP_PORT=3002
-
-# Exponer puerto
-EXPOSE 3002
-
-# Comando para desarrollo con hot reload
-CMD ["npm", "run", "dev"]
