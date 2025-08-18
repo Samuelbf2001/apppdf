@@ -2,6 +2,36 @@
 # Multi-stage build para optimizar tamaño en producción
 
 # =====================================
+# Build Arguments (para compatibilidad con EasyPanel)
+# =====================================
+ARG NODE_ENV=production
+ARG APP_PORT=3002
+ARG FRONTEND_URL
+ARG DATABASE_URL
+ARG REDIS_URL
+ARG GOTENBERG_URL
+ARG HUBSPOT_APP_ID
+ARG HUBSPOT_CLIENT_ID
+ARG HUBSPOT_CLIENT_SECRET
+ARG HUBSPOT_REDIRECT_URI
+ARG HUBSPOT_BASE_URL
+ARG JWT_SECRET
+ARG ENCRYPTION_KEY
+ARG STORAGE_PATH
+ARG FILE_BASE_URL
+ARG DOCUMENT_CONCURRENCY
+ARG HUBSPOT_CONCURRENCY
+ARG LOG_LEVEL
+ARG RATE_LIMIT_MAX_REQUESTS
+ARG MAX_FILE_SIZE_MB
+ARG CORS_ORIGIN
+ARG UPLOAD_PATH
+ARG MAX_FILE_SIZE
+ARG RATE_LIMIT_WINDOW_MS
+ARG ENABLE_METRICS
+ARG GIT_SHA
+
+# =====================================
 # Stage 1: Dependencies
 # =====================================
 FROM node:18-alpine AS dependencies
