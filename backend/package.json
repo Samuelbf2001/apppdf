@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node --require ts-node/register --transpile-only src/server.ts",
+    "start": "npx ts-node --transpile-only src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "db:migrate": "npx prisma migrate dev",
