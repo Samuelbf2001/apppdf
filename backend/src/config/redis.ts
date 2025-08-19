@@ -71,13 +71,13 @@ export const makeQueue = (name: string) => {
       logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
 
       if (type === 'subscriber' || type === 'bclient') {
-        // Excluir completamente las claves no permitidas por Bull v3 (#1873)
-        const { enableReadyCheck, maxRetriesPerRequest, ...rest } = (redisCommon as any);
-        const opts: RedisOptions = { ...rest };
+        // Bull v3 exige enableReadyCheck:false y sin maxRetriesPerRequest
+        const { maxRetriesPerRequest, ...rest } = (redisCommon as any);
+        const opts: RedisOptions = { ...rest, enableReadyCheck: false };
         return new IORedis(opts);
       }
 
-      // Para 'client' usamos la configuración común
+      // Para 'client' usamos la configuración común completa
       return new IORedis(redisCommon);
     }
   });
