@@ -7,6 +7,7 @@ import Layout from './components/Layout/Layout';
 import LoadingScreen from './components/Common/LoadingScreen';
 
 // Páginas
+import LandingPage from './pages/Landing/LandingPage';
 import LoginPage from './pages/Auth/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import TemplatesPage from './pages/Templates/TemplatesPage';
@@ -32,15 +33,25 @@ function App() {
     return <LoadingScreen message="Verificando autenticación..." />;
   }
 
-  // Si no está autenticado, mostrar rutas de autenticación
+  // Si no está autenticado, mostrar landing page y rutas de autenticación
   if (!isAuthenticated) {
     return (
       <Box sx={{ minHeight: '100vh' }}>
         <Routes>
+          {/* Landing page como página principal */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<LandingPage />} />
+          
+          {/* Rutas de autenticación */}
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/success" element={<LoginPage />} />
           <Route path="/auth/error" element={<LoginPage />} />
-          <Route path="*" element={<Navigate to="/auth/login" replace />} />
+          
+          {/* Demo público accesible sin autenticación */}
+          <Route path="/demo" element={<DemoPage />} />
+          
+          {/* Redirigir otras rutas a landing */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Box>
     );

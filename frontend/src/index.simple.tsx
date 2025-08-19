@@ -6,8 +6,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 import LandingPage from './pages/Landing/LandingPage';
 
-// Tema simplificado para la demo
-const demoTheme = createTheme({
+// Tema básico para la demo
+const simpleTheme = createTheme({
   palette: {
     primary: {
       main: '#6366f1',
@@ -28,7 +28,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <ThemeProvider theme={demoTheme}>
+      <ThemeProvider theme={simpleTheme}>
         <CssBaseline />
         <LandingPage />
       </ThemeProvider>

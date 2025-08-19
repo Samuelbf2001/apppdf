@@ -1,13 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-import LandingPage from './pages/Landing/LandingPage';
+import LandingPage from './components/Landing/LandingPage';
 
-// Tema simplificado para la demo
-const demoTheme = createTheme({
+// Tema personalizado para la landing page
+const theme = createTheme({
   palette: {
     primary: {
       main: '#6366f1',
@@ -19,19 +18,20 @@ const demoTheme = createTheme({
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
+  shape: {
+    borderRadius: 8,
+  },
 });
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-
-root.render(
-  <React.StrictMode>
+function App() {
+  return (
     <BrowserRouter>
-      <ThemeProvider theme={demoTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <LandingPage />
       </ThemeProvider>
     </BrowserRouter>
-  </React.StrictMode>
-);
+  );
+}
+
+export default App;

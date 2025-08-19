@@ -1,0 +1,5 @@
+[33mfcb571d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  EXPERT FIX: Solución completa Prisma OpenSSL 3.0 - binaryTargets linux-musl-openssl-3.0.x + libssl3/libcrypto3 + regeneración explícita
+[33m86ed227[m  URGENT FIX: Cambiar openssl1.1-compat por openssl-dev + libssl3 (Alpine 3.21 compatible)
+[33m3cac019[m  CRITICAL FIX: Agregar openssl1.1-compat para resolver error Prisma libssl.so.1.1
+[33ma2b11b7[m  CRITICAL FIX: Backend start script - Usar 'npx ts-node --transpile-only' en lugar de 'node --transpile-only'
+[33mff1649e[m  SAVE PROGRESS: Estado completo del deployment EasyPanel - Preparado para continuar
