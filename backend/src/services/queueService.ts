@@ -15,6 +15,8 @@ interface QueueConfig {
     db?: number;
     retryStrategy?: (times: number) => number;
     enableOfflineQueue?: boolean;
+    maxRetriesPerRequest?: number;
+    lazyConnect?: boolean;
   };
   defaultJobOptions: {
     removeOnComplete: number;
@@ -60,7 +62,9 @@ export class QueueService {
             logger.warn(`Reintentando conexión Redis (intento ${times})...`);
             return delay;
           },
-          enableOfflineQueue: false,
+          enableOfflineQueue: true, // HABILITAR para evitar errores de conexión
+          maxRetriesPerRequest: 3,
+          lazyConnect: true, // Conectar solo cuando sea necesario
         },
         defaultJobOptions: {
           removeOnComplete: 50,
@@ -89,7 +93,9 @@ export class QueueService {
             logger.warn(`Reintentando conexión Redis (intento ${times})...`);
             return delay;
           },
-          enableOfflineQueue: false,
+          enableOfflineQueue: true, // HABILITAR para evitar errores de conexión
+          maxRetriesPerRequest: 3,
+          lazyConnect: true, // Conectar solo cuando sea necesario
         },
         defaultJobOptions: {
           removeOnComplete: 50,
@@ -103,27 +109,42 @@ export class QueueService {
       };
     }
 
-    // Inicializar colas
-    this.documentQueue = new Bull('document-generation', {
-      redis: this.config.redis,
-      defaultJobOptions: this.config.defaultJobOptions,
-    });
+    // Inicializar colas con delay para asegurar conexión Redis
+    setTimeout(() => {
+      this.initializeQueues();
+    }, 1000); // Esperar 1 segundo para que Redis se conecte
+  }
 
-    this.hubspotQueue = new Bull('hubspot-upload', {
-      redis: this.config.redis,
-      defaultJobOptions: this.config.defaultJobOptions,
-    });
+  /**
+   * Inicializar las colas después de asegurar conexión Redis
+   */
+  private initializeQueues(): void {
+    try {
+      logger.info('Inicializando colas...');
+      
+      this.documentQueue = new Bull('document-generation', {
+        redis: this.config.redis,
+        defaultJobOptions: this.config.defaultJobOptions,
+      });
 
-    this.cleanupQueue = new Bull('cleanup', {
-      redis: this.config.redis,
-      defaultJobOptions: {
-        ...this.config.defaultJobOptions,
-        attempts: 1, // Solo un intento para cleanup
-      },
-    });
+      this.hubspotQueue = new Bull('hubspot-upload', {
+        redis: this.config.redis,
+        defaultJobOptions: this.config.defaultJobOptions,
+      });
 
-    this.setupEventHandlers();
-    logger.info('Servicio de colas inicializado');
+      this.cleanupQueue = new Bull('cleanup', {
+        redis: this.config.redis,
+        defaultJobOptions: {
+          ...this.config.defaultJobOptions,
+          attempts: 1, // Solo un intento para cleanup
+        },
+      });
+
+      this.setupEventHandlers();
+      logger.info('Servicio de colas inicializado correctamente');
+    } catch (error) {
+      logger.error('Error inicializando colas:', error);
+    }
   }
 
   /**
