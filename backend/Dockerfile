@@ -38,12 +38,15 @@ FROM node:18-alpine AS dependencies
 
 WORKDIR /app
 
+# Instalar OpenSSL 1.1 compatibility para Prisma
+RUN apk add --no-cache openssl1.1-compat
+
 # Copiar package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar dependencias
-RUN npm install --only=production && npm cache clean --force
+# Instalar dependencias de producción
+RUN npm ci --only=production && npm cache clean --force
 
 # Generar cliente Prisma
 RUN npx prisma generate
@@ -55,12 +58,15 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
+# Instalar OpenSSL 1.1 compatibility
+RUN apk add --no-cache openssl1.1-compat
+
 # Copiar package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Instalar todas las dependencias (incluyendo dev)
-RUN npm install
+# Instalar TODAS las dependencias (incluyendo dev)
+RUN npm ci
 
 # Copiar código fuente
 COPY src ./src
@@ -69,27 +75,26 @@ COPY prisma ./prisma
 # Generar cliente Prisma
 RUN npx prisma generate
 
-    # Skip TypeScript compilation - use ts-node directly
-    # RUN npm run build
+# Compilar TypeScript
+RUN npm run build
 
 # =====================================
 # Stage 3: Production (DEFAULT - último stage)
 # =====================================
 FROM node:18-alpine AS production
 
-# Crear usuario no-root
+# Crear usuario no-root (Alpine)
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S hubspot -u 1001
+    adduser -S hubspot -u 1001 -G nodejs
 
 WORKDIR /app
 
-# Instalar dependencias de sistema necesarias
+# Instalar dependencias de sistema necesarias (Alpine/OpenSSL 1.1)
 RUN apk add --no-cache \
     ca-certificates \
     tzdata \
-    libssl3 \
-    libcrypto3 \
-    && rm -rf /var/cache/apk/*
+    openssl1.1-compat \
+    tini
 
 # Configurar zona horaria
 ENV TZ=America/Mexico_City
@@ -98,10 +103,9 @@ ENV TZ=America/Mexico_City
 COPY --from=dependencies --chown=hubspot:nodejs /app/node_modules ./node_modules
 COPY --from=dependencies --chown=hubspot:nodejs /app/package*.json ./
 
-    # Copiar código fuente (sin compilar)
-    COPY --from=build --chown=hubspot:nodejs /app/src ./src
-    COPY --from=build --chown=hubspot:nodejs /app/tsconfig.json ./
-    COPY --from=build --chown=hubspot:nodejs /app/prisma ./prisma
+# Copiar código COMPILADO desde build stage
+COPY --from=build --chown=hubspot:nodejs /app/dist ./dist
+COPY --from=build --chown=hubspot:nodejs /app/prisma ./prisma
 
 # Crear directorios necesarios
 RUN mkdir -p logs storage/documents storage/temp && \
@@ -121,9 +125,12 @@ USER hubspot
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3002/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
 
-# Regenerar Prisma para OpenSSL 3.0 y verificar
+# Regenerar Prisma y verificar
 RUN npx prisma generate && \
     node -e "require('@prisma/client')" || (echo "ERROR: Prisma client failed to load" && exit 1)
 
-# Comando por defecto
-CMD ["npm", "start"]
+# Usar tini como init system
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Comando por defecto - usar código compilado
+CMD ["node", "dist/server.js"]
