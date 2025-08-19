@@ -70,14 +70,10 @@ export const makeQueue = (name: string) => {
     createClient: (type: 'client' | 'subscriber' | 'bclient') => {
       logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
 
-      // Bull v3 no permite enableReadyCheck ni maxRetriesPerRequest distinto de null
-      // en conexiones de tipo subscriber/bclient. Ajustamos aquí.
       if (type === 'subscriber' || type === 'bclient') {
-        const opts: RedisOptions = {
-          ...redisCommon,
-          enableReadyCheck: false,
-          maxRetriesPerRequest: null,
-        };
+        // Excluir completamente las claves no permitidas por Bull v3 (#1873)
+        const { enableReadyCheck, maxRetriesPerRequest, ...rest } = (redisCommon as any);
+        const opts: RedisOptions = { ...rest };
         return new IORedis(opts);
       }
 
