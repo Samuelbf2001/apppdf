@@ -38,8 +38,8 @@ FROM node:18-alpine AS dependencies
 
 WORKDIR /app
 
-# Instalar OpenSSL 1.1 compatibility para Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Alpine 3.21 usa OpenSSL 3.x por defecto
+# No se necesita instalación adicional
 
 # Copiar package files
 COPY package*.json ./
@@ -58,8 +58,8 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Instalar OpenSSL 1.1 compatibility
-RUN apk add --no-cache openssl1.1-compat
+# Alpine 3.21 usa OpenSSL 3.x por defecto
+# No se necesita instalación adicional
 
 # Copiar package files
 COPY package*.json ./
@@ -89,11 +89,11 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Instalar dependencias de sistema necesarias (Alpine/OpenSSL 1.1)
+# Instalar dependencias de sistema necesarias (Alpine/OpenSSL 3.x)
 RUN apk add --no-cache \
     ca-certificates \
     tzdata \
-    openssl1.1-compat \
+    openssl \
     tini
 
 # Configurar zona horaria

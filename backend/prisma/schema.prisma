@@ -2,8 +2,8 @@
 generator client {
   provider      = "prisma-client-js"
   output        = "../node_modules/.prisma/client"
-  // Alpine Linux con OpenSSL 1.1 compatibility
-  binaryTargets = ["linux-musl", "linux-musl-openssl-1.1.x"]
+  // Alpine Linux 3.21 con OpenSSL 3.x
+  binaryTargets = ["linux-musl", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
