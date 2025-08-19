@@ -34,27 +34,42 @@ export class QueueService {
   constructor() {
     // Configurar conexión Redis desde variables de entorno
     const redisUrlString = process.env.REDIS_URL || 'redis://localhost:6379';
-    logger.info('Configurando Redis con URL:', { url: redisUrlString });
+    logger.info('Configurando Redis con URL:', { 
+      url: redisUrlString,
+      masked: redisUrlString.replace(/:([^@]+)@/, ':****@')
+    });
     
-    const redisUrl = new URL(redisUrlString);
-    
-    this.config = {
-      redis: {
-        host: redisUrl.hostname,
-        port: parseInt(redisUrl.port) || 6379,
-        password: redisUrl.password || undefined,
-        db: 0,
-      },
-      defaultJobOptions: {
-        removeOnComplete: 50, // Mantener últimos 50 jobs completados
-        removeOnFail: 100,    // Mantener últimos 100 jobs fallidos para debugging
-        attempts: 3,          // Máximo 3 intentos
-        backoff: {
-          type: 'exponential',
-          delay: 2000,        // Empezar con 2 segundos de delay
+    try {
+      const redisUrl = new URL(redisUrlString);
+      
+      // Extraer credenciales y configuración
+      const password = redisUrl.password || redisUrl.username || undefined;
+      const host = redisUrl.hostname;
+      const port = parseInt(redisUrl.port) || 6379;
+      
+      this.config = {
+        redis: {
+          host,
+          port,
+          password,
+          db: 0,
+          retryStrategy: (times: number) => {
+            const delay = Math.min(times * 50, 2000);
+            logger.warn(`Reintentando conexión Redis (intento ${times})...`);
+            return delay;
+          },
+          enableOfflineQueue: false,
         },
-      },
-    };
+        defaultJobOptions: {
+          removeOnComplete: 50,
+          removeOnFail: 100,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+        },
+      };
     } catch (error) {
       logger.error('Error parseando REDIS_URL:', {
         url: redisUrlString,
