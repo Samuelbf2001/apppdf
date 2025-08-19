@@ -60,16 +60,34 @@ export const testRedisConnection = async (): Promise<boolean> => {
 
 /**
  * Factory para crear colas Bull v4 con configuración Redis correcta
- * Bull v4 tiene una API diferente a v3
+ * SOLUCIÓN DEFINITIVA: sobrescribir completamente la configuración interna
  */
 export const makeQueue = (name: string) => {
 	const Bull = require('bull');
 	const REDIS_URL = process.env.REDIS_URL;
 	
-	// Configuración para Bull v4
+	// SOLUCIÓN DEFINITIVA: Crear cliente Redis personalizado ANTES de Bull
+	let redisClient: IORedis;
+	
+	if (REDIS_URL) {
+		// Usar REDIS_URL con configuración personalizada
+		redisClient = new IORedis(REDIS_URL, {
+			enableOfflineQueue: true,
+			maxRetriesPerRequest: null,  // Solo para conexiones principales
+			retryStrategy: (times: number) => Math.min(times * 50, 2000),
+		});
+	} else {
+		// Usar configuración por defecto personalizada
+		redisClient = new IORedis({
+			...redisCommon,
+			maxRetriesPerRequest: null,  // Solo para conexiones principales
+		});
+	}
+	
+	// Configuración para Bull v4 que sobrescribe internamente
 	const bullOpts = {
-		// Bull v4: usar redis directamente en lugar de createClient
-		redis: REDIS_URL || redisCommon,
+		// Pasar el cliente Redis personalizado
+		redis: redisClient,
 		
 		// Configuración de jobs
 		defaultJobOptions: {
@@ -87,6 +105,23 @@ export const makeQueue = (name: string) => {
 			lockDuration: 30000,
 			stalledInterval: 30000,
 			maxStalledCount: 1,
+		},
+		
+		// IMPORTANTE: Configuración que sobrescribe internamente
+		createClient: (type: 'client' | 'subscriber' | 'bclient') => {
+			logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
+			
+			// Para TODOS los tipos, usar configuración limpia
+			const cleanConfig: RedisOptions = {
+				host: redisClient.options.host,
+				port: redisClient.options.port,
+				password: redisClient.options.password,
+				db: redisClient.options.db,
+				enableOfflineQueue: true,
+				// NO incluir maxRetriesPerRequest ni enableReadyCheck
+			};
+			
+			return new IORedis(cleanConfig);
 		},
 	};
 	
