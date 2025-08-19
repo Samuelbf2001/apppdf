@@ -45,8 +45,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar dependencias de producción
-RUN npm ci --only=production && npm cache clean --force
+# Instalar dependencias de producción (sin package-lock.json, usar npm install)
+RUN npm install --only=production && npm cache clean --force
 
 # Generar cliente Prisma
 RUN npx prisma generate
@@ -66,7 +66,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Instalar TODAS las dependencias (incluyendo dev)
-RUN npm ci
+RUN npm install
 
 # Copiar código fuente
 COPY src ./src
