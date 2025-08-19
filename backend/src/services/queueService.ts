@@ -13,6 +13,8 @@ interface QueueConfig {
     port: number;
     password?: string;
     db?: number;
+    retryStrategy?: (times: number) => number;
+    enableOfflineQueue?: boolean;
   };
   defaultJobOptions: {
     removeOnComplete: number;
@@ -78,7 +80,7 @@ export class QueueService {
       // Fallback configuration
       this.config = {
         redis: {
-          host: 'automaticpdf-redis',
+          host: 'bot_automaticpdf-redis',
           port: 6379,
           password: 'hubspot',
           db: 0,
