@@ -1,6 +1,7 @@
 import Bull, { Queue, Job } from 'bull';
 import { logger } from '../config/logger';
 import { DocumentGenerationJob, HubSpotUploadJob } from '../types';
+import Redis from 'ioredis';
 
 /**
  * Servicio de colas para procesamiento asíncrono
@@ -30,10 +31,12 @@ interface QueueConfig {
 }
 
 export class QueueService {
-  private documentQueue: Queue<DocumentGenerationJob>;
-  private hubspotQueue: Queue<HubSpotUploadJob>;
-  private cleanupQueue: Queue<any>;
+  private documentQueue: Queue<DocumentGenerationJob> | null = null;
+  private hubspotQueue: Queue<HubSpotUploadJob> | null = null;
+  private cleanupQueue: Queue<any> | null = null;
   private readonly config: QueueConfig;
+  private redisClient: Redis | null = null;
+  private isInitialized = false;
 
   constructor() {
     // Configurar conexión Redis desde variables de entorno
@@ -62,9 +65,9 @@ export class QueueService {
             logger.warn(`Reintentando conexión Redis (intento ${times})...`);
             return delay;
           },
-          enableOfflineQueue: true, // HABILITAR para evitar errores de conexión
+          enableOfflineQueue: true,
           maxRetriesPerRequest: 3,
-          lazyConnect: true, // Conectar solo cuando sea necesario
+          lazyConnect: false, // Cambiar a false para conexión inmediata
         },
         defaultJobOptions: {
           removeOnComplete: 50,
@@ -93,9 +96,9 @@ export class QueueService {
             logger.warn(`Reintentando conexión Redis (intento ${times})...`);
             return delay;
           },
-          enableOfflineQueue: true, // HABILITAR para evitar errores de conexión
+          enableOfflineQueue: true,
           maxRetriesPerRequest: 3,
-          lazyConnect: true, // Conectar solo cuando sea necesario
+          lazyConnect: false, // Cambiar a false para conexión inmediata
         },
         defaultJobOptions: {
           removeOnComplete: 50,
@@ -109,31 +112,95 @@ export class QueueService {
       };
     }
 
-    // Inicializar colas con delay para asegurar conexión Redis
-    setTimeout(() => {
-      this.initializeQueues();
-    }, 1000); // Esperar 1 segundo para que Redis se conecte
+    // Inicializar conexión Redis y colas
+    this.initializeRedisAndQueues();
+  }
+
+  /**
+   * Inicializar conexión Redis y luego las colas
+   */
+  private async initializeRedisAndQueues(): Promise<void> {
+    try {
+      logger.info('Iniciando conexión a Redis...');
+      
+      // Crear cliente Redis de prueba
+      this.redisClient = new Redis({
+        host: this.config.redis.host,
+        port: this.config.redis.port,
+        password: this.config.redis.password,
+        db: this.config.redis.db,
+        retryStrategy: this.config.redis.retryStrategy,
+        maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
+        lazyConnect: false,
+        enableOfflineQueue: true,
+      });
+
+      // Esperar a que Redis esté conectado
+      await this.redisClient.ping();
+      logger.info('✅ Conexión a Redis establecida exitosamente');
+
+      // Ahora inicializar las colas
+      await this.initializeQueues();
+      
+    } catch (error) {
+      logger.error('❌ Error conectando a Redis:', error);
+      // Reintentar en 5 segundos
+      setTimeout(() => {
+        this.initializeRedisAndQueues();
+      }, 5000);
+    }
   }
 
   /**
    * Inicializar las colas después de asegurar conexión Redis
    */
-  private initializeQueues(): void {
+  private async initializeQueues(): Promise<void> {
     try {
+      if (!this.redisClient) {
+        throw new Error('Cliente Redis no disponible');
+      }
+
       logger.info('Inicializando colas...');
       
       this.documentQueue = new Bull('document-generation', {
-        redis: this.config.redis,
+        redis: {
+          host: this.config.redis.host,
+          port: this.config.redis.port,
+          password: this.config.redis.password,
+          db: this.config.redis.db,
+          retryStrategy: this.config.redis.retryStrategy,
+          maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
+          lazyConnect: false,
+          enableOfflineQueue: true,
+        },
         defaultJobOptions: this.config.defaultJobOptions,
       });
 
       this.hubspotQueue = new Bull('hubspot-upload', {
-        redis: this.config.redis,
+        redis: {
+          host: this.config.redis.host,
+          port: this.config.redis.port,
+          password: this.config.redis.password,
+          db: this.config.redis.db,
+          retryStrategy: this.config.redis.retryStrategy,
+          maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
+          lazyConnect: false,
+          enableOfflineQueue: true,
+        },
         defaultJobOptions: this.config.defaultJobOptions,
       });
 
       this.cleanupQueue = new Bull('cleanup', {
-        redis: this.config.redis,
+        redis: {
+          host: this.config.redis.host,
+          port: this.config.redis.port,
+          password: this.config.redis.password,
+          db: this.config.redis.db,
+          retryStrategy: this.config.redis.retryStrategy,
+          maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
+          lazyConnect: false,
+          enableOfflineQueue: true,
+        },
         defaultJobOptions: {
           ...this.config.defaultJobOptions,
           attempts: 1, // Solo un intento para cleanup
@@ -141,10 +208,35 @@ export class QueueService {
       });
 
       this.setupEventHandlers();
-      logger.info('Servicio de colas inicializado correctamente');
+      this.isInitialized = true;
+      logger.info('✅ Servicio de colas inicializado correctamente');
     } catch (error) {
-      logger.error('Error inicializando colas:', error);
+      logger.error('❌ Error inicializando colas:', error);
+      this.isInitialized = false;
     }
+  }
+
+  /**
+   * Verificar si el servicio está listo
+   */
+  public isReady(): boolean {
+    return this.isInitialized && 
+           this.documentQueue !== null && 
+           this.hubspotQueue !== null && 
+           this.cleanupQueue !== null;
+  }
+
+  /**
+   * Esperar a que el servicio esté listo
+   */
+  public async waitForReady(timeoutMs: number = 30000): Promise<boolean> {
+    const startTime = Date.now();
+    
+    while (!this.isReady() && (Date.now() - startTime) < timeoutMs) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return this.isReady();
   }
 
   /**
@@ -152,7 +244,7 @@ export class QueueService {
    */
   private setupEventHandlers(): void {
     // Event handlers para document queue
-    this.documentQueue.on('completed', (job: Job<DocumentGenerationJob>, result: any) => {
+    this.documentQueue?.on('completed', (job: Job<DocumentGenerationJob>, result: any) => {
       logger.info('Job de documento completado:', {
         jobId: job.id,
         documentId: job.data.documentId,
@@ -161,7 +253,7 @@ export class QueueService {
       });
     });
 
-    this.documentQueue.on('failed', (job: Job<DocumentGenerationJob>, error: Error) => {
+    this.documentQueue?.on('failed', (job: Job<DocumentGenerationJob>, error: Error) => {
       logger.error('Job de documento fallido:', {
         jobId: job.id,
         documentId: job.data.documentId,
@@ -172,7 +264,7 @@ export class QueueService {
       });
     });
 
-    this.documentQueue.on('stalled', (job: Job<DocumentGenerationJob>) => {
+    this.documentQueue?.on('stalled', (job: Job<DocumentGenerationJob>) => {
       logger.warn('Job de documento bloqueado:', {
         jobId: job.id,
         documentId: job.data.documentId,
@@ -181,7 +273,7 @@ export class QueueService {
     });
 
     // Event handlers para HubSpot queue
-    this.hubspotQueue.on('completed', (job: Job<HubSpotUploadJob>, result: any) => {
+    this.hubspotQueue?.on('completed', (job: Job<HubSpotUploadJob>, result: any) => {
       logger.info('Job de HubSpot completado:', {
         jobId: job.id,
         documentId: job.data.documentId,
@@ -190,7 +282,7 @@ export class QueueService {
       });
     });
 
-    this.hubspotQueue.on('failed', (job: Job<HubSpotUploadJob>, error: Error) => {
+    this.hubspotQueue?.on('failed', (job: Job<HubSpotUploadJob>, error: Error) => {
       logger.error('Job de HubSpot fallido:', {
         jobId: job.id,
         documentId: job.data.documentId,
@@ -201,7 +293,7 @@ export class QueueService {
     });
 
     // Event handlers para cleanup queue
-    this.cleanupQueue.on('completed', (job: Job, result: any) => {
+    this.cleanupQueue?.on('completed', (job: Job, result: any) => {
       logger.info('Job de limpieza completado:', {
         jobId: job.id,
         result,
@@ -212,20 +304,20 @@ export class QueueService {
     const queues = [this.documentQueue, this.hubspotQueue, this.cleanupQueue];
     
     queues.forEach(queue => {
-      queue.on('error', (error: Error) => {
-        logger.error(`Error en cola ${queue.name}:`, {
+      queue?.on('error', (error: Error) => {
+        logger.error(`Error en cola ${queue?.name}:`, {
           message: error.message,
           stack: error.stack,
           timestamp: new Date().toISOString()
         });
       });
 
-      queue.on('waiting', (jobId: string) => {
-        logger.debug(`Job ${jobId} esperando en cola ${queue.name}`);
+      queue?.on('waiting', (jobId: string) => {
+        logger.debug(`Job ${jobId} esperando en cola ${queue?.name}`);
       });
 
-      queue.on('active', (job: Job, jobPromise: Promise<any>) => {
-        logger.debug(`Job ${job.id} iniciado en cola ${queue.name}`, {
+      queue?.on('active', (job: Job, jobPromise: Promise<any>) => {
+        logger.debug(`Job ${job.id} iniciado en cola ${queue?.name}`, {
           attempts: job.attemptsMade + 1,
           maxAttempts: job.opts.attempts,
         });
@@ -257,7 +349,7 @@ export class QueueService {
         delay: options?.delay,
       });
 
-      const job = await this.documentQueue.add('generate-document', data, {
+      const job = await this.documentQueue?.add('generate-document', data, {
         priority: options?.priority || 0,
         delay: options?.delay || 0,
         attempts: options?.attempts || this.config.defaultJobOptions.attempts,
@@ -265,11 +357,11 @@ export class QueueService {
       });
 
       logger.info('Job de documento agregado exitosamente:', {
-        jobId: job.id,
+        jobId: job?.id,
         documentId: data.documentId,
       });
 
-      return job;
+      return job!;
     } catch (error: any) {
       logger.error('Error agregando job de documento:', {
         error: error.message,
@@ -291,7 +383,7 @@ export class QueueService {
   } | null> {
     try {
       const jobId = `doc-${documentId}`;
-      const job = await this.documentQueue.getJob(jobId);
+      const job = await this.documentQueue?.getJob(jobId);
       
       if (!job) {
         return null;
@@ -336,18 +428,18 @@ export class QueueService {
         tenantId: data.tenantId,
       });
 
-      const job = await this.hubspotQueue.add('upload-to-hubspot', data, {
+      const job = await this.hubspotQueue?.add('upload-to-hubspot', data, {
         priority: options?.priority || 0,
         delay: options?.delay || 0,
         jobId: `hubspot-${data.documentId}`, // ID único
       });
 
       logger.info('Job de HubSpot agregado exitosamente:', {
-        jobId: job.id,
+        jobId: job?.id,
         documentId: data.documentId,
       });
 
-      return job;
+      return job!;
     } catch (error: any) {
       logger.error('Error agregando job de HubSpot:', {
         error: error.message,
@@ -373,7 +465,7 @@ export class QueueService {
     } = {}
   ): Promise<Job> {
     try {
-      const job = await this.cleanupQueue.add(
+      const job = await this.cleanupQueue?.add(
         'cleanup',
         {
           type,
@@ -388,12 +480,12 @@ export class QueueService {
       );
 
       logger.info('Job de limpieza programado:', {
-        jobId: job.id,
+        jobId: job?.id,
         type,
         maxAgeHours: options.maxAgeHours,
       });
 
-      return job;
+      return job!;
     } catch (error: any) {
       logger.error('Error programando limpieza:', {
         error: error.message,
@@ -417,9 +509,9 @@ export class QueueService {
   }> {
     try {
       const [docStats, hubspotStats, cleanupStats] = await Promise.all([
-        this.documentQueue.getJobCounts(),
-        this.hubspotQueue.getJobCounts(),
-        this.cleanupQueue.getJobCounts(),
+        this.documentQueue?.getJobCounts(),
+        this.hubspotQueue?.getJobCounts(),
+        this.cleanupQueue?.getJobCounts(),
       ]);
 
       return {
@@ -438,7 +530,7 @@ export class QueueService {
    */
   async pauseQueue(queueName: 'documents' | 'hubspot' | 'cleanup'): Promise<void> {
     try {
-      let queue: Queue;
+      let queue: Queue | undefined;
       
       switch (queueName) {
         case 'documents':
@@ -454,7 +546,7 @@ export class QueueService {
           throw new Error(`Cola desconocida: ${queueName}`);
       }
 
-      await queue.pause();
+      await queue?.pause();
       logger.info(`Cola ${queueName} pausada`);
     } catch (error: any) {
       logger.error(`Error pausando cola ${queueName}:`, error);
@@ -467,7 +559,7 @@ export class QueueService {
    */
   async resumeQueue(queueName: 'documents' | 'hubspot' | 'cleanup'): Promise<void> {
     try {
-      let queue: Queue;
+      let queue: Queue | undefined;
       
       switch (queueName) {
         case 'documents':
@@ -483,7 +575,7 @@ export class QueueService {
           throw new Error(`Cola desconocida: ${queueName}`);
       }
 
-      await queue.resume();
+      await queue?.resume();
       logger.info(`Cola ${queueName} reanudada`);
     } catch (error: any) {
       logger.error(`Error reanudando cola ${queueName}:`, error);
@@ -505,8 +597,8 @@ export class QueueService {
       ];
 
       for (const { name, queue } of queues) {
-        await queue.clean(24 * 60 * 60 * 1000, 'completed', 50); // Mantener 50 completed
-        await queue.clean(7 * 24 * 60 * 60 * 1000, 'failed', 100); // Mantener failed por 7 días
+        await queue?.clean(24 * 60 * 60 * 1000, 'completed', 50); // Mantener 50 completed
+        await queue?.clean(7 * 24 * 60 * 60 * 1000, 'failed', 100); // Mantener failed por 7 días
         logger.info(`Cola ${name} limpiada`);
       }
 
@@ -525,9 +617,9 @@ export class QueueService {
       logger.info('Cerrando conexiones de colas...');
 
       await Promise.all([
-        this.documentQueue.close(),
-        this.hubspotQueue.close(),
-        this.cleanupQueue.close(),
+        this.documentQueue?.close(),
+        this.hubspotQueue?.close(),
+        this.cleanupQueue?.close(),
       ]);
 
       logger.info('Conexiones de colas cerradas');
