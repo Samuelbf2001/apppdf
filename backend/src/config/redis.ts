@@ -2,7 +2,7 @@ import IORedis, { RedisOptions } from 'ioredis';
 import { logger } from './logger';
 
 /**
- * Configuración Redis optimizada para Bull v3
+ * Configuración Redis optimizada para Bull v4
  * Basada en las mejores prácticas para evitar errores de conexión
  */
 
@@ -13,9 +13,8 @@ export const redisCommon: RedisOptions = {
 	password: process.env.REDIS_PASSWORD || 'hubspot',
 	db: Number(process.env.REDIS_DB || 0),
 	
-	// IMPORTANTE para Bull v3:
+	// IMPORTANTE para Bull v4:
 	enableOfflineQueue: true,           // 👈 HABILITAR cola offline
-	// maxRetriesPerRequest se aplica solo en 'client', NO en redisCommon
 	
 	// Configuración de reconexión
 	retryStrategy: (times: number) => {
@@ -60,37 +59,34 @@ export const testRedisConnection = async (): Promise<boolean> => {
 };
 
 /**
- * Factory para crear colas Bull con configuración Redis correcta
- * Implementación exacta de la solución sugerida para Bull v3
+ * Factory para crear colas Bull v4 con configuración Redis correcta
+ * Bull v4 tiene una API diferente a v3
  */
 export const makeQueue = (name: string) => {
 	const Bull = require('bull');
 	const REDIS_URL = process.env.REDIS_URL;
 	
+	// Configuración para Bull v4
 	const bullOpts = {
-		createClient(type: 'client' | 'subscriber' | 'bclient', opts?: RedisOptions) {
-			logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
-			
-			// Conexión normal para comandos
-			if (type === 'client') {
-				const clientOpts = { 
-					...redisCommon, 
-					...(opts ?? {}),
-					maxRetriesPerRequest: null  // Solo en 'client'
-				};
-				return REDIS_URL ? new IORedis(REDIS_URL, clientOpts) : new IORedis(clientOpts);
-			}
-			
-			// Conexiones especiales: suscriptor y bloqueante
-			// Bull v3 exige enableReadyCheck: false y NO maxRetriesPerRequest
-			const specialOpts = {
-				...redisCommon,
-				...(opts ?? {}),
-				enableReadyCheck: false,    // desactiva readyCheck en estas conexiones
-				// ¡IMPORTANTE! NO incluir maxRetriesPerRequest aquí
-			};
-			
-			return REDIS_URL ? new IORedis(REDIS_URL, specialOpts) : new IORedis(specialOpts);
+		// Bull v4: usar redis directamente en lugar de createClient
+		redis: REDIS_URL || redisCommon,
+		
+		// Configuración de jobs
+		defaultJobOptions: {
+			removeOnComplete: 50,
+			removeOnFail: 100,
+			attempts: 3,
+			backoff: {
+				type: 'exponential',
+				delay: 2000,
+			},
+		},
+		
+		// Configuración de limpieza
+		settings: {
+			lockDuration: 30000,
+			stalledInterval: 30000,
+			maxStalledCount: 1,
 		},
 	};
 	
