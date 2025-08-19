@@ -15,7 +15,7 @@ export const redisCommon: RedisOptions = {
 	
 	// IMPORTANTE para Bull v3:
 	enableOfflineQueue: true,           // 👈 HABILITAR cola offline
-	maxRetriesPerRequest: null,         // 👈 Recomendado para Bull (comandos bloqueantes)
+	// maxRetriesPerRequest se aplica solo en 'client', NO en redisCommon
 	
 	// Configuración de reconexión
 	retryStrategy: (times: number) => {
@@ -73,18 +73,21 @@ export const makeQueue = (name: string) => {
 			
 			// Conexión normal para comandos
 			if (type === 'client') {
-				const clientOpts = { ...(opts ?? {}), ...redisCommon };
+				const clientOpts = { 
+					...redisCommon, 
+					...(opts ?? {}),
+					maxRetriesPerRequest: null  // Solo en 'client'
+				};
 				return REDIS_URL ? new IORedis(REDIS_URL, clientOpts) : new IORedis(clientOpts);
 			}
 			
 			// Conexiones especiales: suscriptor y bloqueante
-			// Bull v3 exige maxRetriesPerRequest: null y enableReadyCheck: false
+			// Bull v3 exige enableReadyCheck: false y NO maxRetriesPerRequest
 			const specialOpts = {
 				...redisCommon,
 				...(opts ?? {}),
-				maxRetriesPerRequest: null, // requerido por Bull para bclient/subscriber
 				enableReadyCheck: false,    // desactiva readyCheck en estas conexiones
-				// ¡OJO! No poner enableOfflineQueue: false aquí
+				// ¡IMPORTANTE! NO incluir maxRetriesPerRequest aquí
 			};
 			
 			return REDIS_URL ? new IORedis(REDIS_URL, specialOpts) : new IORedis(specialOpts);
