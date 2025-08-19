@@ -194,544 +194,448 @@ const HeroSection: React.FC = () => {
             </Stack>
           </Grid>
 
-                                           {/* Mockups con distribución lado a lado */}
+                                                      {/* Mockups replicando la imagen de referencia */}
            <Grid size={{ xs: 12, md: 6 }}>
              <Box sx={{ 
                position: 'relative',
                display: 'flex', 
                flexDirection: { xs: 'column', lg: 'row' },
-               gap: { xs: 4, md: 3, lg: 2 },
+               gap: { xs: 3, lg: 2 },
                height: '100%',
                justifyContent: 'center',
-               alignItems: 'center',
-               py: { xs: 2, md: 4 }
+               alignItems: 'flex-start',
+               py: { xs: 2, md: 3 }
              }}>
                
-               {/* ELEMENTO 1: Workflow de HubSpot */}
-               <Box
-                 sx={{
-                   position: 'relative',
+               {/* ELEMENTO 1: Workflow de HubSpot (estilo imagen de referencia) */}
+            <Box
+              sx={{
+                position: 'relative',
                    width: '100%',
-                   maxWidth: { xs: 280, sm: 320, lg: 240 },
-                   aspectRatio: { xs: '1.1/1', lg: '0.9/1' },
+                   maxWidth: { xs: 320, lg: 280 },
                    flex: { lg: '1' }
-                 }}
-               >
+              }}
+            >
               <Box
                 sx={{
                   backgroundColor: 'white',
-                     borderRadius: { xs: 2, md: 3 },
-                     p: { xs: 2.5, md: 3.5 },
-                     boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
-                     transform: { xs: 'perspective(1000px) rotateY(-8deg) rotateX(3deg)', lg: 'perspective(1000px) rotateY(-5deg) rotateX(2deg)' },
-                     transformOrigin: 'center center',
-                     height: '100%',
+                     borderRadius: 4,
+                     p: 3,
+                     boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                     border: '1px solid rgba(0,0,0,0.05)',
                      display: 'flex',
-                     flexDirection: 'column'
+                     flexDirection: 'column',
+                     gap: 2,
+                     minHeight: 400
                    }}
                  >
-                   {/* Header del workflow optimizado */}
+                                                         {/* Header del workflow (estilo imagen de referencia) */}
                    <Box sx={{ 
                      display: 'flex', 
                      alignItems: 'center', 
-                     gap: 1.5, 
-                     mb: { xs: 2.5, md: 3 },
-                     flexShrink: 0
+                     gap: 2,
+                     mb: 3
                    }}>
                      <Box sx={{ 
-                       width: { xs: 28, md: 32 }, 
-                       height: { xs: 28, md: 32 }, 
+                       width: 40, 
+                       height: 40, 
                        borderRadius: '50%', 
                        backgroundColor: '#ff7043',
                        display: 'flex',
                        alignItems: 'center',
                        justifyContent: 'center',
                        color: 'white',
-                       fontSize: { xs: '12px', md: '14px' },
-                       fontWeight: 'bold'
+                       fontSize: '20px'
                      }}>
-                       👤
+                       🔍
                      </Box>
-                     <Typography variant="body2" sx={{ 
-                       fontWeight: 600, 
-                       fontSize: { xs: '0.8rem', md: '0.9rem' }, 
-                       color: '#33475b',
-                       lineHeight: 1.2
+                     <Typography variant="h6" sx={{ 
+                       fontWeight: 700, 
+                       fontSize: '1.1rem', 
+                       color: '#111'
                      }}>
                        Create Offer Campaign
                      </Typography>
                 </Box>
 
-                   {/* Workflow Steps optimizado */}
-                   <Box sx={{ 
-                     display: 'flex', 
-                     flexDirection: 'column', 
-                     alignItems: 'center', 
-                     gap: { xs: 1.5, md: 2 },
-                     flex: 1,
-                     justifyContent: 'center'
-                   }}>
+                                      {/* Workflow Steps (estilo imagen de referencia) */}
+                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                      
                      {/* Step 1: Send Email */}
                      <Box sx={{
-                       width: '100%',
-                       maxWidth: { xs: 160, md: 180 },
-                       aspectRatio: '2.2/1',
-                       backgroundColor: '#0078d4',
+                       backgroundColor: '#2E86AB',
                        color: 'white',
-                       borderRadius: { xs: '4px', md: '6px' },
-                       p: { xs: 1.5, md: 2 },
+                       borderRadius: 3,
+                       p: 3,
                        textAlign: 'center',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       gap: 0.5
+                       boxShadow: '0 8px 20px rgba(46,134,171,0.3)'
                      }}>
-                       <Box sx={{ fontSize: { xs: '14px', md: '16px' } }}>📧</Box>
-                       <Typography variant="body2" sx={{ 
-                         fontWeight: 600, 
-                         fontSize: { xs: '0.7rem', md: '0.75rem' },
-                         lineHeight: 1
-                       }}>
+                       <Box sx={{ fontSize: '24px', mb: 1 }}>✉️</Box>
+                       <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', mb: 0.5 }}>
                          Send email
                        </Typography>
-                       <Typography variant="caption" sx={{ 
-                         fontSize: { xs: '0.6rem', md: '0.65rem' }, 
-                         opacity: 0.9,
-                         lineHeight: 1
-                       }}>
+                       <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
                          Nurture Email
-                  </Typography>
+                       </Typography>
                      </Box>
 
-                     {/* Conector optimizado */}
-                     <Box sx={{ 
-                       width: 2, 
-                       height: { xs: 12, md: 16 }, 
-                       backgroundColor: '#cbd6e2',
-                       position: 'relative',
-                       '&::after': {
-                         content: '""',
-                         position: 'absolute',
-                         bottom: -3,
-                         left: -2,
-                         width: 0,
-                         height: 0,
-                         borderLeft: '3px solid transparent',
-                         borderRight: '3px solid transparent',
-                         borderTop: '5px solid #cbd6e2'
-                       }
-                     }} />
+                     {/* Arrow */}
+                     <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
+                       <Box sx={{ fontSize: '24px', color: '#666' }}>↓</Box>
+                     </Box>
 
                      {/* Step 2: If/Then Branch */}
                      <Box sx={{
-                       width: '100%',
-                       maxWidth: { xs: 160, md: 180 },
-                       aspectRatio: '2.2/1',
-                       backgroundColor: '#00bfa6',
+                       backgroundColor: '#7B4397',
                        color: 'white',
-                       borderRadius: { xs: '4px', md: '6px' },
-                       p: { xs: 1.5, md: 2 },
+                  borderRadius: 3,
+                  p: 3,
                        textAlign: 'center',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       gap: 0.5
+                       boxShadow: '0 8px 20px rgba(123,67,151,0.3)'
                      }}>
-                       <Box sx={{ fontSize: { xs: '14px', md: '16px' } }}>🔀</Box>
-                       <Typography variant="body2" sx={{ 
-                         fontWeight: 600, 
-                         fontSize: { xs: '0.7rem', md: '0.75rem' },
-                         lineHeight: 1
-                       }}>
-                         If/then branch
+                       <Box sx={{ fontSize: '24px', mb: 1 }}>⚙️</Box>
+                       <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', mb: 0.5 }}>
+                         If/Then branch
                        </Typography>
-                       <Typography variant="caption" sx={{ 
-                         fontSize: { xs: '0.6rem', md: '0.65rem' }, 
-                         opacity: 0.9,
-                         lineHeight: 1
-                       }}>
+                       <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
                          Contact known
                        </Typography>
-                  </Box>
-                  
-                     {/* Conector optimizado */}
-                     <Box sx={{ 
-                       width: 2, 
-                       height: { xs: 12, md: 16 }, 
-                       backgroundColor: '#cbd6e2',
-                       position: 'relative',
-                       '&::after': {
-                         content: '""',
-                         position: 'absolute',
-                         bottom: -3,
-                         left: -2,
-                         width: 0,
-                         height: 0,
-                         borderLeft: '3px solid transparent',
-                         borderRight: '3px solid transparent',
-                         borderTop: '5px solid #cbd6e2'
-                       }
-                     }} />
-
-                                          {/* Step 3: AutomaticPDFHub - Con z-index alto para sobreponerse */}
-                     <Box sx={{
-                       width: '100%',
-                       maxWidth: { xs: 160, md: 180 },
-                       aspectRatio: '2.2/1',
-                       backgroundColor: '#ff7043',
-                       color: 'white',
-                       borderRadius: { xs: '4px', md: '6px' },
-                       p: { xs: 1.5, md: 2 },
-                       textAlign: 'center',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       gap: 0.5,
-                       border: '2px solid #ff5722',
-                       boxShadow: '0 3px 8px rgba(255,112,67,0.25)'
-                     }}>
-                       <Box sx={{ fontSize: { xs: '14px', md: '16px' }, fontWeight: 'bold' }}>📄</Box>
-                       <Typography variant="body2" sx={{ 
-                         fontWeight: 600, 
-                         fontSize: { xs: '0.7rem', md: '0.75rem' },
-                         lineHeight: 1
-                       }}>
-                         AutomaticPDFHub
-                       </Typography>
-                       <Typography variant="caption" sx={{ 
-                         fontSize: { xs: '0.6rem', md: '0.65rem' }, 
-                         opacity: 0.9,
-                         lineHeight: 1
-                       }}>
-                         Generate PDF
-                       </Typography>
                      </Box>
-                </Box>
+
+                     {/* Arrow */}
+                     <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
+                       <Box sx={{ fontSize: '24px', color: '#666' }}>↓</Box>
+                     </Box>
+                   </Box>
               </Box>
 
-                 {/* Badge optimizado */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                     top: { xs: -8, md: -10 },
-                     right: { xs: -8, md: -10 },
+                                                   {/* Badge HubSpot Workflow */}
+                 <Box
+                   sx={{
+                     position: 'absolute',
+                     top: -12,
+                     left: '50%',
+                     transform: 'translateX(-50%)',
                      backgroundColor: '#ff7043',
                      color: 'white',
-                     borderRadius: { xs: 1.5, md: 2 },
-                     px: { xs: 1, md: 1.5 },
-                     py: { xs: 0.25, md: 0.5 },
-                     fontSize: { xs: '0.6rem', md: '0.7rem' },
+                     borderRadius: 2,
+                     px: 2,
+                     py: 0.5,
+                     fontSize: '0.75rem',
                      fontWeight: 600,
-                     boxShadow: '0 3px 8px rgba(255,112,67,0.3)',
-                     whiteSpace: 'nowrap'
+                     boxShadow: '0 4px 12px rgba(255,112,67,0.3)',
+                     zIndex: 10
                    }}
                  >
-                   HubSpot Workflow
+                   🔄 HubSpot Workflow
                  </Box>
                </Box>
 
-               {/* ELEMENTO 2: Editor de Documentos */}
+               {/* AutomaticPDFHub - Elemento separado (estilo imagen de referencia) */}
+               <Box
+                 sx={{
+                   position: 'absolute',
+                   bottom: { xs: -80, lg: -60 },
+                   left: { xs: '50%', lg: '25%' },
+                   transform: { xs: 'translateX(-50%)', lg: 'translateX(-50%)' },
+                   zIndex: 5
+                 }}
+               >
+                 <Box sx={{
+                   backgroundColor: '#ff7043',
+                   color: 'white',
+                   borderRadius: 4,
+                   p: 3,
+                   textAlign: 'center',
+                   boxShadow: '0 12px 24px rgba(255,112,67,0.4)',
+                   minWidth: 220,
+                   border: '2px solid rgba(255,255,255,0.2)'
+                 }}>
+                   <Box sx={{ fontSize: '28px', mb: 1 }}>📄</Box>
+                   <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem', mb: 0.5 }}>
+                     AutomatiPDFHub
+                   </Typography>
+                   <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
+                     Generate PDF
+                   </Typography>
+                 </Box>
+               </Box>
+
+                              {/* ELEMENTO 2: Editor de Documentos (estilo imagen de referencia) */}
                <Box
                  sx={{
                    position: 'relative',
                    width: '100%',
-                   maxWidth: { xs: 280, sm: 320, lg: 240 },
-                   aspectRatio: { xs: '1.1/1', lg: '0.9/1' },
+                   maxWidth: { xs: 320, lg: 280 },
                    flex: { lg: '1' }
                  }}
                >
                  <Box
                    sx={{
                      backgroundColor: 'white',
-                     borderRadius: { xs: 2, md: 3 },
-                     p: { xs: 2.5, md: 3.5 },
-                                          boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
-                     transform: { xs: 'perspective(1000px) rotateY(8deg) rotateX(3deg)', lg: 'perspective(1000px) rotateY(5deg) rotateX(2deg)' },
-                     transformOrigin: 'center center',
-                     height: '100%',
+                     borderRadius: 4,
+                     p: 3,
+                     boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                     border: '1px solid rgba(0,0,0,0.05)',
                      display: 'flex',
-                     flexDirection: 'column'
+                     flexDirection: 'column',
+                     gap: 3,
+                     minHeight: 400
                    }}
                  >
-                   {/* Header del editor optimizado */}
+                                      {/* Header del editor (estilo imagen de referencia) */}
                    <Box sx={{ 
                      display: 'flex', 
                      alignItems: 'center', 
-                     gap: 1.5, 
-                     mb: { xs: 2, md: 2.5 }, 
-                     pb: { xs: 1.5, md: 2 }, 
-                     borderBottom: '1px solid #e1e5e9',
-                     flexShrink: 0
+                     gap: 2
                    }}>
                      <Box sx={{ 
-                       width: { xs: 20, md: 24 }, 
-                       height: { xs: 20, md: 24 }, 
-                       borderRadius: '4px', 
+                       width: 40, 
+                       height: 40, 
+                       borderRadius: '8px', 
                        backgroundColor: '#ff7043',
                        display: 'flex',
                        alignItems: 'center',
                        justifyContent: 'center',
                        color: 'white',
-                       fontSize: { xs: '10px', md: '12px' },
-                       fontWeight: 'bold'
+                       fontSize: '20px'
                      }}>
                        📄
                      </Box>
-                     <Typography variant="body2" sx={{ 
-                       fontWeight: 600, 
-                       fontSize: { xs: '0.8rem', md: '0.9rem' }, 
-                       color: '#33475b'
+                     <Typography variant="h6" sx={{ 
+                       fontWeight: 700, 
+                       fontSize: '1.1rem', 
+                       color: '#111'
                      }}>
                        Document Editor
                      </Typography>
-                   </Box>
+                </Box>
 
-                   {/* Preview del documento optimizado */}
+                                                         {/* Preview del documento (estilo imagen de referencia) */}
                    <Box sx={{ 
-                     backgroundColor: '#f8f9fa', 
-                     borderRadius: { xs: '4px', md: '6px' }, 
-                     p: { xs: 1.5, md: 2 },
-                     border: '1px solid #e1e5e9',
-                     mb: { xs: 1.5, md: 2 },
-                     flex: 1,
-                     display: 'flex',
-                     flexDirection: 'column',
-                     gap: { xs: 0.8, md: 1 }
+                     backgroundColor: '#f8f9fa',
+                     borderRadius: 2,
+                     p: 3,
+                     border: '1px solid #e9ecef',
+                     flex: 1
                    }}>
-                     <Typography variant="body2" sx={{ 
-                       fontSize: { xs: '0.7rem', md: '0.75rem' }, 
-                       lineHeight: 1.4, 
-                       color: '#33475b'
+                     <Typography variant="body1" sx={{ 
+                       fontSize: '1rem', 
+                       lineHeight: 1.6, 
+                       color: '#333',
+                       mb: 2
                      }}>
                        Dear <Box component="span" sx={{ 
-                         backgroundColor: '#e3f2fd', 
-                         color: '#1976d2',
-                         px: { xs: 0.5, md: 0.6 }, 
-                         py: 0.2,
-                         borderRadius: '3px',
-                         fontSize: { xs: '0.65rem', md: '0.7rem' },
+                         color: '#2E86AB',
                          fontWeight: 600
                        }}>
                          {'{contact.firstname}'}
                        </Box>,
                      </Typography>
                      
-                     <Typography variant="body2" sx={{ 
-                       fontSize: { xs: '0.7rem', md: '0.75rem' }, 
-                       lineHeight: 1.4, 
-                       color: '#666'
+                     <Typography variant="body1" sx={{ 
+                       fontSize: '1rem', 
+                       lineHeight: 1.6, 
+                       color: '#333',
+                       mb: 2
                      }}>
                        Proposal for <Box component="span" sx={{ 
-                         backgroundColor: '#e8f5e9', 
-                         color: '#2e7d32',
-                         px: { xs: 0.5, md: 0.6 }, 
-                         py: 0.2,
-                         borderRadius: '3px',
-                         fontSize: { xs: '0.65rem', md: '0.7rem' },
+                         color: '#2E86AB',
                          fontWeight: 600
                        }}>
                          {'{deal.amount}'}
                        </Box>
-                     </Typography>
-
-                     <Typography variant="body2" sx={{ 
-                       fontSize: { xs: '0.7rem', md: '0.75rem' }, 
-                       lineHeight: 1.4, 
-                       color: '#666'
+                  </Typography>
+                  
+                     <Typography variant="body1" sx={{ 
+                       fontSize: '1rem', 
+                       lineHeight: 1.6, 
+                       color: '#333'
                      }}>
                        Company: <Box component="span" sx={{ 
-                         backgroundColor: '#fff3e0', 
-                         color: '#f57c00',
-                         px: { xs: 0.5, md: 0.6 }, 
-                         py: 0.2,
-                         borderRadius: '3px',
-                         fontSize: { xs: '0.65rem', md: '0.7rem' },
+                         color: '#ff7043',
                          fontWeight: 600
                        }}>
                          {'{company.name}'}
                        </Box>
-                </Typography>
-              </Box>
+                     </Typography>
+                   </Box>
 
-                   {/* Propiedades disponibles optimizadas */}
-                   <Box sx={{ flexShrink: 0 }}>
-                     <Typography variant="caption" sx={{ 
-                       color: '#7c98b6', 
-                       fontSize: { xs: '0.6rem', md: '0.65rem' }, 
-                       fontWeight: 600,
-                       display: 'block',
-                       mb: 0.8
+                                      {/* Available Properties (estilo imagen de referencia) */}
+                   <Box>
+                     <Typography variant="body2" sx={{ 
+                       color: '#666', 
+                       fontSize: '0.9rem', 
+                       fontWeight: 500,
+                       mb: 2
                      }}>
                        Available Properties:
                      </Typography>
-                     <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 0.6 }, flexWrap: 'wrap' }}>
-                       {[
-                         { name: 'contact.email', color: '#1976d2' },
-                         { name: 'deal.stage', color: '#2e7d32' },
-                         { name: 'company.industry', color: '#f57c00' },
-                         { name: 'deal.closedate', color: '#7b1fa2' }
-                       ].map((prop, index) => (
-                         <Box 
-                           key={index}
-                           sx={{ 
-                             fontSize: { xs: '0.55rem', md: '0.6rem' },
-                             backgroundColor: `${prop.color}15`,
-                             color: prop.color,
-                             px: { xs: 0.5, md: 0.6 },
-                             py: { xs: 0.2, md: 0.3 },
-                             borderRadius: '3px',
-                             border: `1px solid ${prop.color}30`,
-                             fontWeight: 500,
-                             whiteSpace: 'nowrap'
-                           }}
-                         >
-                           {prop.name}
-                         </Box>
-                       ))}
-                     </Box>
-
-                     {/* Estado del editor optimizado */}
                      <Box sx={{ 
                        display: 'flex', 
-                       justifyContent: 'space-between',
-                       alignItems: 'center',
-                       mt: { xs: 1.5, md: 2 },
-                       pt: { xs: 1.5, md: 2 },
-                       borderTop: '1px solid #e1e5e9'
+                       gap: 1, 
+                       flexWrap: 'wrap'
                      }}>
-                       <Typography variant="caption" sx={{ 
-                         color: '#7c98b6', 
-                         fontSize: { xs: '0.6rem', md: '0.65rem' }
+                       <Box sx={{
+                         backgroundColor: '#e9ecef',
+                         color: '#495057',
+                         px: 2,
+                         py: 1,
+                         borderRadius: 2,
+                         fontSize: '0.85rem',
+                         fontWeight: 500
                        }}>
-                         Auto-save: ON
-                       </Typography>
-                       <Typography variant="caption" sx={{ 
-                         color: '#00bfa6', 
-                         fontSize: { xs: '0.6rem', md: '0.65rem' },
-                         fontWeight: 600
+                         company.industry
+                       </Box>
+                       <Box sx={{
+                         backgroundColor: '#e9ecef',
+                         color: '#495057',
+                         px: 2,
+                         py: 1,
+                         borderRadius: 2,
+                         fontSize: '0.85rem',
+                         fontWeight: 500
                        }}>
-                         ✓ Ready to generate PDF
-                       </Typography>
+                         deal.close_date
+                       </Box>
                      </Box>
                    </Box>
-                 </Box>
+              </Box>
 
-                 {/* Badge optimizado */}
+                                  {/* Badge Document Editor */}
                  <Box
                    sx={{
                      position: 'absolute',
-                     top: { xs: -8, md: -10 },
-                     left: { xs: -8, md: -10 },
-                     backgroundColor: '#00bfa6',
+                     top: -12,
+                     left: '50%',
+                     transform: 'translateX(-50%)',
+                     backgroundColor: '#2E86AB',
                      color: 'white',
-                     borderRadius: { xs: 1.5, md: 2 },
-                     px: { xs: 1, md: 1.5 },
-                     py: { xs: 0.25, md: 0.5 },
-                     fontSize: { xs: '0.6rem', md: '0.7rem' },
+                     borderRadius: 2,
+                     px: 2,
+                     py: 0.5,
+                     fontSize: '0.75rem',
                      fontWeight: 600,
-                     boxShadow: '0 3px 8px rgba(0,191,166,0.3)',
-                     whiteSpace: 'nowrap'
+                     boxShadow: '0 4px 12px rgba(46,134,171,0.3)',
+                     zIndex: 10
                    }}
                  >
-                   Document Editor
+                   📝 Document Editor
                  </Box>
-               </Box>
-
+                  </Box>
+                  
                               {/* Elementos flotantes reorganizados para layout lado a lado */}
                
-               {/* Feature flotante: Generación instantánea */}
+                                             {/* Feature flotante: Instant generation */}
                <Box
                  sx={{
                    position: 'absolute',
-                   top: { xs: '15%', lg: '20%' },
-                   right: { xs: '-5%', md: '-8%', lg: '-15%' },
-                   backgroundColor: 'rgba(255,255,255,0.95)',
-                   backdropFilter: 'blur(20px)',
-                   borderRadius: { xs: 1.5, md: 2 },
-                   p: { xs: 1.5, md: 2 },
+                   top: { xs: '10%', lg: '15%' },
+                   right: { xs: '-5%', md: '-8%', lg: '-12%' },
+                   backgroundColor: 'white',
+                   borderRadius: 3,
+                   p: 2,
                    display: { xs: 'none', md: 'flex' },
                    alignItems: 'center',
                    gap: 1,
-                   boxShadow: '0 6px 24px rgba(0,0,0,0.1)',
-                   border: '1px solid rgba(255,255,255,0.2)',
-                   maxWidth: 140,
-                   zIndex: 3
+                   boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                   minWidth: 140,
+                   zIndex: 6
                  }}
                >
-                 <Speed sx={{ color: '#4ade80', fontSize: '18px' }} />
+                  <Box sx={{ 
+                   width: 32,
+                   height: 32,
+                   borderRadius: '50%',
+                   backgroundColor: '#4ade80',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                   <Box sx={{ fontSize: '16px' }}>⚡</Box>
+                 </Box>
                  <Typography variant="body2" sx={{ 
-                   color: '#1f2937', 
+                   color: '#111', 
                    fontWeight: 600, 
-                   fontSize: '0.7rem',
-                   lineHeight: 1.2
+                   fontSize: '0.8rem'
                  }}>
-                   Generación instantánea
-                 </Typography>
-               </Box>
+                   Instant generation
+                    </Typography>
+              </Box>
 
-               {/* Feature flotante: Integración */}
-               <Box
-                 sx={{
-                   position: 'absolute',
-                   top: { xs: '45%', lg: '50%' },
-                   left: { xs: '-5%', md: '-8%', lg: '-15%' },
-                   backgroundColor: 'rgba(255,255,255,0.95)',
-                   backdropFilter: 'blur(20px)',
-                   borderRadius: { xs: 1.5, md: 2 },
-                   p: { xs: 1.5, md: 2 },
+                                             {/* Feature flotante: HubSpot Integration */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                   top: { xs: '35%', lg: '40%' },
+                   left: { xs: '-5%', md: '-8%', lg: '-12%' },
+                   backgroundColor: 'white',
+                   borderRadius: 3,
+                   p: 2,
                    display: { xs: 'none', md: 'flex' },
-                   alignItems: 'center',
+                  alignItems: 'center',
                    gap: 1,
-                   boxShadow: '0 6px 24px rgba(0,0,0,0.1)',
-                   border: '1px solid rgba(255,255,255,0.2)',
-                   maxWidth: 140,
-                   zIndex: 3
+                   boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                   minWidth: 140,
+                   zIndex: 6
                  }}
                >
-                 <ConnectWithoutContact sx={{ color: '#ff6b6b', fontSize: '18px' }} />
-                 <Typography variant="body2" sx={{ 
-                   color: '#1f2937', 
-                   fontWeight: 600, 
-                   fontSize: '0.7rem',
-                   lineHeight: 1.2
+                 <Box sx={{
+                   width: 32,
+                   height: 32,
+                   borderRadius: '50%',
+                   backgroundColor: '#ff6b6b',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center'
                  }}>
-                   Integración HubSpot
-                 </Typography>
-               </Box>
+                   <Box sx={{ fontSize: '16px' }}>🔗</Box>
+                 </Box>
+                 <Typography variant="body2" sx={{ 
+                   color: '#111', 
+                   fontWeight: 600, 
+                   fontSize: '0.8rem'
+                 }}>
+                   HubSpot Integration
+                </Typography>
+              </Box>
 
-               {/* Feature flotante: Automatización */}
-               <Box
-                 sx={{
-                   position: 'absolute',
+               {/* Feature flotante: 100% Automated */}
+              <Box
+                sx={{
+                  position: 'absolute',
                    bottom: { xs: '15%', lg: '20%' },
-                   right: { xs: '-5%', md: '-8%', lg: '-15%' },
-                   backgroundColor: 'rgba(255,255,255,0.95)',
-                   backdropFilter: 'blur(20px)',
-                   borderRadius: { xs: 1.5, md: 2 },
-                   p: { xs: 1.5, md: 2 },
+                   right: { xs: '-5%', md: '-8%', lg: '-12%' },
+                   backgroundColor: 'white',
+                   borderRadius: 3,
+                   p: 2,
                    display: { xs: 'none', md: 'flex' },
-                   alignItems: 'center',
+                  alignItems: 'center',
                    gap: 1,
-                   boxShadow: '0 6px 24px rgba(0,0,0,0.1)',
-                   border: '1px solid rgba(255,255,255,0.2)',
-                   maxWidth: 140,
-                   zIndex: 3
+                   boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                   minWidth: 140,
+                   zIndex: 6
                  }}
                >
-                 <Security sx={{ color: '#8b5cf6', fontSize: '18px' }} />
-                 <Typography variant="body2" sx={{ 
-                   color: '#1f2937', 
-                   fontWeight: 600, 
-                   fontSize: '0.7rem',
-                   lineHeight: 1.2
+                 <Box sx={{
+                   width: 32,
+                   height: 32,
+                   borderRadius: '50%',
+                   backgroundColor: '#333',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center'
                  }}>
-                   100% Automatizado
-                 </Typography>
-               </Box>
+                   <Box sx={{ fontSize: '16px', color: 'white' }}>✓</Box>
+                 </Box>
+                 <Typography variant="body2" sx={{ 
+                   color: '#111', 
+                   fontWeight: 600, 
+                   fontSize: '0.8rem'
+                 }}>
+                   100% Automated
+                </Typography>
+              </Box>
 
             </Box>
           </Grid>
