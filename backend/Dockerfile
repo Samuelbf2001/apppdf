@@ -87,8 +87,8 @@ WORKDIR /app
 RUN apk add --no-cache \
     ca-certificates \
     tzdata \
-    openssl-dev \
     libssl3 \
+    libcrypto3 \
     && rm -rf /var/cache/apk/*
 
 # Configurar zona horaria
@@ -120,6 +120,10 @@ USER hubspot
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3002/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+
+# Regenerar Prisma para OpenSSL 3.0 y verificar
+RUN npx prisma generate && \
+    node -e "require('@prisma/client')" || (echo "ERROR: Prisma client failed to load" && exit 1)
 
 # Comando por defecto
 CMD ["npm", "start"]
