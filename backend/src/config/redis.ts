@@ -61,31 +61,37 @@ export const testRedisConnection = async (): Promise<boolean> => {
 
 /**
  * Factory para crear colas Bull con configuración Redis correcta
- * Esto asegura que TODAS las conexiones de Bull usen la configuración correcta
+ * Implementación exacta de la solución sugerida para Bull v3
  */
 export const makeQueue = (name: string) => {
 	const Bull = require('bull');
 	const REDIS_URL = process.env.REDIS_URL;
 	
-	return new Bull(name, {
-		// Forzamos a Bull a usar nuestras opciones en TODAS sus conexiones
-		createClient: (type: 'client' | 'subscriber' | 'bclient', opts?: RedisOptions) => {
+	const bullOpts = {
+		createClient(type: 'client' | 'subscriber' | 'bclient', opts?: RedisOptions) {
 			logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
-
-			// Merge base + opts que Bull provee
-			const base: RedisOptions = { ...(redisCommon as any) };
-			const merged: RedisOptions = { ...(opts ?? {}), ...base };
-
-			if (type === 'subscriber' || type === 'bclient') {
-				// Bull v3: NO permitir estas claves en conexiones especiales
-				const { enableReadyCheck, maxRetriesPerRequest, ...cleaned } = (merged as any);
-				return REDIS_URL ? new IORedis(REDIS_URL, cleaned) : new IORedis(cleaned);
+			
+			// Conexión normal para comandos
+			if (type === 'client') {
+				const clientOpts = { ...(opts ?? {}), ...redisCommon };
+				return REDIS_URL ? new IORedis(REDIS_URL, clientOpts) : new IORedis(clientOpts);
 			}
-
-			// Para 'client' usamos configuración completa
-			return REDIS_URL ? new IORedis(REDIS_URL, merged) : new IORedis(merged);
-		}
-	});
+			
+			// Conexiones especiales: suscriptor y bloqueante
+			// Bull v3 exige maxRetriesPerRequest: null y enableReadyCheck: false
+			const specialOpts = {
+				...redisCommon,
+				...(opts ?? {}),
+				maxRetriesPerRequest: null, // requerido por Bull para bclient/subscriber
+				enableReadyCheck: false,    // desactiva readyCheck en estas conexiones
+				// ¡OJO! No poner enableOfflineQueue: false aquí
+			};
+			
+			return REDIS_URL ? new IORedis(REDIS_URL, specialOpts) : new IORedis(specialOpts);
+		},
+	};
+	
+	return new Bull(name, bullOpts);
 };
 
 export default redisCommon;
