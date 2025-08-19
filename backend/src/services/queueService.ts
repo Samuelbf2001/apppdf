@@ -33,7 +33,10 @@ export class QueueService {
 
   constructor() {
     // Configurar conexión Redis desde variables de entorno
-    const redisUrl = new URL(process.env.REDIS_URL || 'redis://localhost:6379');
+    const redisUrlString = process.env.REDIS_URL || 'redis://localhost:6379';
+    logger.info('Configurando Redis con URL:', { url: redisUrlString });
+    
+    const redisUrl = new URL(redisUrlString);
     
     this.config = {
       redis: {
@@ -52,6 +55,36 @@ export class QueueService {
         },
       },
     };
+    } catch (error) {
+      logger.error('Error parseando REDIS_URL:', {
+        url: redisUrlString,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      // Fallback configuration
+      this.config = {
+        redis: {
+          host: 'automaticpdf-redis',
+          port: 6379,
+          password: 'hubspot',
+          db: 0,
+          retryStrategy: (times: number) => {
+            const delay = Math.min(times * 50, 2000);
+            logger.warn(`Reintentando conexión Redis (intento ${times})...`);
+            return delay;
+          },
+          enableOfflineQueue: false,
+        },
+        defaultJobOptions: {
+          removeOnComplete: 50,
+          removeOnFail: 100,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+        },
+      };
+    }
 
     // Inicializar colas
     this.documentQueue = new Bull('document-generation', {
@@ -142,7 +175,11 @@ export class QueueService {
     
     queues.forEach(queue => {
       queue.on('error', (error: Error) => {
-        logger.error(`Error en cola ${queue.name}:`, error);
+        logger.error(`Error en cola ${queue.name}:`, {
+          message: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString()
+        });
       });
 
       queue.on('waiting', (jobId: string) => {
