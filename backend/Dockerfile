@@ -87,7 +87,8 @@ WORKDIR /app
 RUN apk add --no-cache \
     ca-certificates \
     tzdata \
-    openssl1.1-compat \
+    openssl-dev \
+    libssl3 \
     && rm -rf /var/cache/apk/*
 
 # Configurar zona horaria
