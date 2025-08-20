@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 /**
  * Configuración Redis optimizada para Bull v4
- * Basada en las mejores prácticas para evitar errores de conexión
+ * SOLUCIÓN DEFINITIVA: usar solo configuración redis directa
  */
 
 // Configuración común para todas las conexiones Redis
@@ -60,34 +60,34 @@ export const testRedisConnection = async (): Promise<boolean> => {
 
 /**
  * Factory para crear colas Bull v4 con configuración Redis correcta
- * SOLUCIÓN DEFINITIVA: sobrescribir completamente la configuración interna
+ * SOLUCIÓN DEFINITIVA: NO usar createClient, solo configuración redis directa
  */
 export const makeQueue = (name: string) => {
 	const Bull = require('bull');
 	const REDIS_URL = process.env.REDIS_URL;
 	
-	// SOLUCIÓN DEFINITIVA: Crear cliente Redis personalizado ANTES de Bull
-	let redisClient: IORedis;
+	// SOLUCIÓN DEFINITIVA: Configuración Redis limpia para Bull v4
+	let redisConfig: RedisOptions;
 	
 	if (REDIS_URL) {
-		// Usar REDIS_URL con configuración personalizada
-		redisClient = new IORedis(REDIS_URL, {
+		// Usar REDIS_URL con configuración mínima
+		redisConfig = {
+			// Solo las opciones que Bull v4 permite
 			enableOfflineQueue: true,
-			maxRetriesPerRequest: null,  // Solo para conexiones principales
-			retryStrategy: (times: number) => Math.min(times * 50, 2000),
-		});
+			// NO incluir maxRetriesPerRequest ni enableReadyCheck
+		};
 	} else {
-		// Usar configuración por defecto personalizada
-		redisClient = new IORedis({
+		// Usar configuración por defecto limpia
+		redisConfig = {
 			...redisCommon,
-			maxRetriesPerRequest: null,  // Solo para conexiones principales
-		});
+			// NO incluir maxRetriesPerRequest ni enableReadyCheck
+		};
 	}
 	
-	// Configuración para Bull v4 que sobrescribe internamente
+	// Configuración para Bull v4 - SOLO redis, NO createClient
 	const bullOpts = {
-		// Pasar el cliente Redis personalizado
-		redis: redisClient,
+		// Pasar configuración Redis limpia
+		redis: REDIS_URL || redisConfig,
 		
 		// Configuración de jobs
 		defaultJobOptions: {
@@ -107,22 +107,7 @@ export const makeQueue = (name: string) => {
 			maxStalledCount: 1,
 		},
 		
-		// IMPORTANTE: Configuración que sobrescribe internamente
-		createClient: (type: 'client' | 'subscriber' | 'bclient') => {
-			logger.debug(`Creando cliente Redis tipo: ${type} para cola: ${name}`);
-			
-			// Para TODOS los tipos, usar configuración limpia
-			const cleanConfig: RedisOptions = {
-				host: redisClient.options.host,
-				port: redisClient.options.port,
-				password: redisClient.options.password,
-				db: redisClient.options.db,
-				enableOfflineQueue: true,
-				// NO incluir maxRetriesPerRequest ni enableReadyCheck
-			};
-			
-			return new IORedis(cleanConfig);
-		},
+		// IMPORTANTE: NO usar createClient - dejar que Bull v4 maneje internamente
 	};
 	
 	return new Bull(name, bullOpts);
