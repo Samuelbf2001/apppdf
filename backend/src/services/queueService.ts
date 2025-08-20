@@ -1,5 +1,5 @@
 import Bull, { Queue, Job } from 'bull';
-import { logger } from '../config/logger';
+import { logger, sanitizeForLogging } from '../config/logger';
 import { DocumentGenerationJob, HubSpotUploadJob } from '../types';
 import { makeQueue, testRedisConnection } from '../config/redis';
 
@@ -202,7 +202,7 @@ export class QueueService {
       timestamp: new Date().toISOString(),
       service: 'QueueService',
       interval: 30000,
-      healthCheckInterval: this.healthCheckInterval,
+      // 🔴 CRÍTICO: NO pasar el objeto healthCheckInterval al logger
     });
   }
 
