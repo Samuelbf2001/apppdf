@@ -7,18 +7,26 @@ import { processHubSpotUpload, handleHubSpotJobFailure } from './hubspotWorker';
 import { processCleanup, handleCleanupJobFailure } from './cleanupWorker';
 
 /**
- * Registro y configuración de workers para las colas
- * Centraliza el setup de todos los procesadores de jobs
+ * Registro y configuración ROBUSTA de workers para las colas
+ * SOLUCIÓN COMPLETA: reconexión automática + health checks + manejo de conexiones cerradas
  * 
- * IMPLEMENTACIÓN CAPA 3: Esperar queue.isReady() antes de usar las colas
+ * IMPLEMENTACIÓN ROBUSTA: Workers que se reconectan automáticamente
  */
 
 export class WorkerManager {
   private isRunning = false;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private workersHealth = {
+    document: false,
+    hubspot: false,
+    cleanup: false
+  };
 
   /**
-   * Iniciar todos los workers
-   * CAPA 3: Esperar a que las colas estén listas antes de registrar procesadores
+   * Iniciar todos los workers con manejo robusto
+   * SOLUCIÓN COMPLETA: Reconexión automática + health checks
    */
   async start(): Promise<void> {
     if (this.isRunning) {
@@ -27,9 +35,9 @@ export class WorkerManager {
     }
 
     try {
-      logger.info('🚀 Iniciando workers...');
+      logger.info('🚀 Iniciando workers ROBUSTOS...');
 
-      // CAPA 3: ESPERAR a que el QueueService esté listo
+      // 🔴 CRÍTICO: ESPERAR a que el QueueService esté listo
       logger.info('⏳ Esperando a que QueueService esté listo...');
       const isReady = await queueService.waitForReady(30000); // 30 segundos timeout
       
@@ -39,7 +47,7 @@ export class WorkerManager {
 
       logger.info('✅ QueueService está listo, procediendo con workers...');
 
-      // CAPA 3: Verificar que las colas existan antes de usarlas
+      // 🔴 CRÍTICO: Verificar que las colas existan antes de usarlas
       const documentQueue = (queueService as any).documentQueue;
       const hubspotQueue = (queueService as any).hubspotQueue;
       const cleanupQueue = (queueService as any).cleanupQueue;
@@ -48,7 +56,7 @@ export class WorkerManager {
         throw new Error('Una o más colas no están disponibles');
       }
 
-      // CAPA 3: Esperar a que cada cola esté lista individualmente
+      // 🔴 CRÍTICO: Esperar a que cada cola esté lista individualmente
       logger.info('⏳ Esperando a que las colas estén listas...');
       await Promise.all([
         documentQueue.isReady(),
@@ -58,60 +66,256 @@ export class WorkerManager {
 
       logger.info('✅ Todas las colas están listas, registrando procesadores...');
 
+      // 🔴 CRÍTICO: Registrar procesadores con manejo robusto
+      await this.registerDocumentWorker(documentQueue);
+      await this.registerHubSpotWorker(hubspotQueue);
+      await this.registerCleanupWorker(cleanupQueue);
+
+      // 🔴 CRÍTICO: Programar jobs de limpieza DESPUÉS de que las colas estén listas
+      logger.info('📅 Programando jobs de limpieza automática...');
+      await this.scheduleAutomaticCleanup();
+
+      this.isRunning = true;
+      this.reconnectAttempts = 0; // Reset contador de reintentos
+
+      // 🔴 CRÍTICO: Iniciar health checks continuos para workers
+      this.startWorkerHealthChecks();
+
+      logger.info('🎉 Workers ROBUSTOS iniciados exitosamente', {
+        documentConcurrency: parseInt(process.env.DOCUMENT_CONCURRENCY || '2'),
+        hubspotConcurrency: parseInt(process.env.HUBSPOT_CONCURRENCY || '1'),
+        cleanupConcurrency: 1,
+      });
+
+    } catch (error) {
+      logger.error('❌ Error iniciando workers ROBUSTOS:', error);
+      this.isRunning = false;
+      
+      // 🔴 CRÍTICO: Reintentar con backoff exponencial
+      this.scheduleWorkerReconnect();
+    }
+  }
+
+  /**
+   * Registrar worker de documentos con manejo robusto
+   */
+  private async registerDocumentWorker(queue: any): Promise<void> {
+    try {
       // Registrar procesador de documentos
-      documentQueue.process(
+      queue.process(
         'generate-document',
-        parseInt(process.env.DOCUMENT_CONCURRENCY || '2'), // Procesar hasta 2 documentos simultáneamente
+        parseInt(process.env.DOCUMENT_CONCURRENCY || '2'),
         processDocumentGeneration
       );
 
       // Registrar handler de errores para documentos
-      documentQueue.on('failed', handleDocumentJobFailure);
+      queue.on('failed', handleDocumentJobFailure);
 
+      this.workersHealth.document = true;
+      logger.info('✅ Worker de documentos registrado correctamente');
+      
+    } catch (error) {
+      logger.error('❌ Error registrando worker de documentos:', error);
+      this.workersHealth.document = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Registrar worker de HubSpot con manejo robusto
+   */
+  private async registerHubSpotWorker(queue: any): Promise<void> {
+    try {
       // Registrar procesador de HubSpot
-      hubspotQueue.process(
+      queue.process(
         'upload-to-hubspot',
-        parseInt(process.env.HUBSPOT_CONCURRENCY || '1'), // Procesar de uno en uno para evitar rate limits
+        parseInt(process.env.HUBSPOT_CONCURRENCY || '1'),
         processHubSpotUpload
       );
 
       // Registrar handler de errores para HubSpot
-      hubspotQueue.on('failed', handleHubSpotJobFailure);
+      queue.on('failed', handleHubSpotJobFailure);
 
+      this.workersHealth.hubspot = true;
+      logger.info('✅ Worker de HubSpot registrado correctamente');
+      
+    } catch (error) {
+      logger.error('❌ Error registrando worker de HubSpot:', error);
+      this.workersHealth.hubspot = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Registrar worker de limpieza con manejo robusto
+   */
+  private async registerCleanupWorker(queue: any): Promise<void> {
+    try {
       // Registrar procesador de limpieza
-      cleanupQueue.process(
+      queue.process(
         'cleanup',
         1, // Solo un job de limpieza a la vez
         processCleanup
       );
 
       // Registrar handler de errores para limpieza
-      cleanupQueue.on('failed', handleCleanupJobFailure);
+      queue.on('failed', handleCleanupJobFailure);
 
-      // CAPA 3: Programar jobs de limpieza DESPUÉS de que las colas estén listas
-      logger.info('📅 Programando jobs de limpieza automática...');
-      await this.scheduleAutomaticCleanup();
-
-      this.isRunning = true;
-
-      logger.info('🎉 Workers iniciados exitosamente', {
-        documentConcurrency: parseInt(process.env.DOCUMENT_CONCURRENCY || '2'),
-        hubspotConcurrency: parseInt(process.env.HUBSPOT_CONCURRENCY || '1'),
-        cleanupConcurrency: 1,
-      });
-
-    } catch (error: any) {
-      logger.error('❌ Error iniciando workers:', {
-        error: error.message,
-        stack: error.stack,
-      });
-      this.isRunning = false;
+      this.workersHealth.cleanup = true;
+      logger.info('✅ Worker de limpieza registrado correctamente');
+      
+    } catch (error) {
+      logger.error('❌ Error registrando worker de limpieza:', error);
+      this.workersHealth.cleanup = false;
       throw error;
     }
   }
 
   /**
-   * Detener todos los workers
+   * Programar reconexión de workers con backoff exponencial
+   */
+  private scheduleWorkerReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      logger.error('❌ Máximo de reintentos de workers alcanzado, deteniendo reconexión');
+      return;
+    }
+
+    const delay = Math.min(Math.pow(2, this.reconnectAttempts) * 1000, 30000);
+    this.reconnectAttempts++;
+    
+    logger.warn(`🔄 Reintentando workers en ${delay}ms (intento ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    setTimeout(() => {
+      this.start();
+    }, delay);
+  }
+
+  /**
+   * Iniciar health checks continuos para workers
+   */
+  private startWorkerHealthChecks(): void {
+    // 🔴 CRÍTICO: Health check cada 45 segundos para workers
+    this.healthCheckInterval = setInterval(async () => {
+      await this.performWorkerHealthCheck();
+    }, 45000);
+    
+    logger.info('🔍 Health checks de workers iniciados (cada 45 segundos)');
+  }
+
+  /**
+   * Realizar health check completo de workers
+   */
+  private async performWorkerHealthCheck(): Promise<void> {
+    try {
+      // Verificar que QueueService esté listo
+      if (!queueService.isReady()) {
+        logger.warn('⚠️ Health check workers: QueueService no está listo');
+        await this.handleQueueServiceUnhealthy();
+        return;
+      }
+
+      // Verificar que las colas estén listas
+      const documentQueue = (queueService as any).documentQueue;
+      const hubspotQueue = (queueService as any).hubspotQueue;
+      const cleanupQueue = (queueService as any).cleanupQueue;
+
+      if (!documentQueue || !hubspotQueue || !cleanupQueue) {
+        logger.warn('⚠️ Health check workers: Algunas colas no están disponibles');
+        await this.handleQueuesUnavailable();
+        return;
+      }
+
+      // Verificar estado de cada worker
+      const workersStatus = await Promise.all([
+        documentQueue.isReady(),
+        hubspotQueue.isReady(),
+        cleanupQueue.isReady(),
+      ]);
+
+      // Actualizar estado de salud de workers
+      this.workersHealth.document = workersStatus[0];
+      this.workersHealth.hubspot = workersStatus[1];
+      this.workersHealth.cleanup = workersStatus[2];
+
+      // Verificar si algún worker no está saludable
+      const allWorkersHealthy = Object.values(this.workersHealth).every(healthy => healthy);
+      if (!allWorkersHealthy) {
+        logger.warn('⚠️ Health check workers: Algunos workers no están saludables:', this.workersHealth);
+        await this.handleWorkersUnhealthy();
+        return;
+      }
+
+      logger.debug('✅ Health check workers: Todos los workers están saludables');
+      
+    } catch (error) {
+      logger.error('❌ Error en health check de workers:', error);
+      await this.handleWorkerHealthCheckError();
+    }
+  }
+
+  /**
+   * Manejar QueueService no saludable
+   */
+  private async handleQueueServiceUnhealthy(): Promise<void> {
+    logger.warn('🔄 QueueService no saludable, esperando a que se recupere...');
+    // No hacer nada, esperar a que QueueService se recupere automáticamente
+  }
+
+  /**
+   * Manejar colas no disponibles
+   */
+  private async handleQueuesUnavailable(): Promise<void> {
+    logger.warn('🔄 Colas no disponibles, reiniciando workers...');
+    this.isRunning = false;
+    await this.start();
+  }
+
+  /**
+   * Manejar workers no saludables
+   */
+  private async handleWorkersUnhealthy(): Promise<void> {
+    logger.warn('🔄 Workers no saludables, reiniciando workers...');
+    this.isRunning = false;
+    await this.start();
+  }
+
+  /**
+   * Manejar error en health check de workers
+   */
+  private async handleWorkerHealthCheckError(): Promise<void> {
+    logger.error('🔄 Error en health check de workers, reiniciando workers...');
+    this.isRunning = false;
+    await this.start();
+  }
+
+  /**
+   * Programar limpieza automática
+   */
+  private async scheduleAutomaticCleanup(): Promise<void> {
+    try {
+      const cleanupQueue = (queueService as any).cleanupQueue;
+      
+      // Programar limpieza cada hora
+      await cleanupQueue.add(
+        'cleanup',
+        { type: 'scheduled' },
+        { 
+          repeat: { cron: '0 * * * *' }, // Cada hora
+          jobId: 'scheduled-cleanup',
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      );
+
+      logger.info('✅ Limpieza automática programada (cada hora)');
+      
+    } catch (error) {
+      logger.error('❌ Error programando limpieza automática:', error);
+    }
+  }
+
+  /**
+   * Detener workers de forma graceful
    */
   async stop(): Promise<void> {
     if (!this.isRunning) {
@@ -122,102 +326,45 @@ export class WorkerManager {
     try {
       logger.info('🛑 Deteniendo workers...');
 
-      // Verificar que las colas estén disponibles
+      // Detener health checks
+      if (this.healthCheckInterval) {
+        clearInterval(this.healthCheckInterval);
+        this.healthCheckInterval = null;
+      }
+
+      // Cerrar colas gracefulmente
       const documentQueue = (queueService as any).documentQueue;
       const hubspotQueue = (queueService as any).hubspotQueue;
       const cleanupQueue = (queueService as any).cleanupQueue;
 
-      if (documentQueue && hubspotQueue && cleanupQueue) {
-        // Pausar las colas
-        await Promise.all([
-          documentQueue.pause(),
-          hubspotQueue.pause(),
-          cleanupQueue.pause(),
-        ]);
-
-        // Esperar a que terminen los jobs en progreso
-        await Promise.all([
-          documentQueue.whenCurrentJobsFinished(),
-          hubspotQueue.whenCurrentJobsFinished(),
-          cleanupQueue.whenCurrentJobsFinished(),
-        ]);
-      }
+      if (documentQueue) await documentQueue.close();
+      if (hubspotQueue) await hubspotQueue.close();
+      if (cleanupQueue) await cleanupQueue.close();
 
       this.isRunning = false;
-      logger.info('✅ Workers detenidos exitosamente');
-
-    } catch (error: any) {
-      logger.error('❌ Error deteniendo workers:', {
-        error: error.message,
-      });
-      throw error;
+      logger.info('✅ Workers detenidos correctamente');
+      
+    } catch (error) {
+      logger.error('❌ Error deteniendo workers:', error);
     }
   }
 
   /**
-   * Programar jobs de limpieza automática
-   * CAPA 3: Solo se ejecuta después de que las colas estén listas
+   * Obtener estado de salud de workers
    */
-  private async scheduleAutomaticCleanup(): Promise<void> {
-    try {
-      logger.info('🧹 Programando jobs de limpieza automática...');
-
-      // Limpiar archivos temporales cada 6 horas
-      await queueService.scheduleCleanup('temp_files', {
-        maxAgeHours: 24,
-      });
-
-      // Limpiar documentos fallidos cada día
-      await queueService.scheduleCleanup('old_documents', {
-        maxAgeHours: 7 * 24, // 7 días
-      });
-
-      // Limpiar jobs fallidos cada 12 horas
-      await queueService.scheduleCleanup('failed_jobs', {
-        maxAgeHours: 24,
-      });
-
-      logger.info('✅ Jobs de limpieza automática programados');
-
-    } catch (error: any) {
-      logger.error('❌ Error programando jobs de limpieza:', {
-        error: error.message,
-      });
-      // No fallar el inicio de workers por esto
-    }
+  getWorkersHealth(): typeof this.workersHealth {
+    return { ...this.workersHealth };
   }
 
   /**
-   * Obtener estado de workers
+   * Verificar si los workers están ejecutándose
    */
-  getStatus(): {
-    isRunning: boolean;
-    queues: string[];
-    queueServiceReady: boolean;
-  } {
-    return {
-      isRunning: this.isRunning,
-      queues: [
-        'document-generation',
-        'hubspot-upload',
-        'cleanup',
-      ],
-      queueServiceReady: queueService.isReady(),
-    };
-  }
-
-  /**
-   * Reiniciar workers
-   */
-  async restart(): Promise<void> {
-    logger.info('🔄 Reiniciando workers...');
-    await this.stop();
-    await this.start();
-    logger.info('✅ Workers reiniciados exitosamente');
+  isWorkersRunning(): boolean {
+    return this.isRunning;
   }
 }
 
-// Singleton instance
+// Exportar instancia singleton
 export const workerManager = new WorkerManager();
 
 // Manejo graceful shutdown
