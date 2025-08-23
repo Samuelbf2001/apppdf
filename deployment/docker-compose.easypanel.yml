@@ -1,8 +1,11 @@
-# Docker Compose específico para EasyPanel
-# automaticpdfhub.cloud
+# Docker Compose simplificado para EasyPanel
+# automaticpdfhub.cloud - Arquitectura optimizada para producción
 version: '3.8'
 
 services:
+  # =====================================
+  # BASE DE DATOS
+  # =====================================
   postgres:
     image: postgres:15-alpine
     container_name: automaticpdf-postgres
@@ -17,7 +20,15 @@ services:
       - /opt/easypanel/projects/hubspot-pdf/postgres:/var/lib/postgresql/data
     networks:
       - automaticpdf-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U automaticpdf_user -d automaticpdf_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =====================================
+  # CACHE REDIS
+  # =====================================
   redis:
     image: redis:7-alpine
     container_name: automaticpdf-redis
@@ -29,7 +40,15 @@ services:
     networks:
       - automaticpdf-network
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =====================================
+  # SERVICIO PDF GOTENBERG
+  # =====================================
   gotenberg:
     image: gotenberg/gotenberg:7
     container_name: automaticpdf-gotenberg
@@ -42,7 +61,15 @@ services:
       - "gotenberg"
       - "--chromium-disable-web-security"
       - "--log-level=warn"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =====================================
+  # BACKEND API
+  # =====================================
   backend:
     build:
       context: ./backend
@@ -53,9 +80,12 @@ services:
     ports:
       - "3022:3002"
     depends_on:
-      - postgres
-      - redis
-      - gotenberg
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       APP_PORT: 3002
@@ -72,12 +102,21 @@ services:
       DOCUMENT_CONCURRENCY: 3
       HUBSPOT_CONCURRENCY: 2
       LOG_LEVEL: warn
+      MAX_FILE_SIZE_MB: 25
     volumes:
       - /opt/easypanel/projects/hubspot-pdf/storage:/app/storage
       - /opt/easypanel/projects/hubspot-pdf/logs:/app/logs
     networks:
       - automaticpdf-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =====================================
+  # FRONTEND REACT
+  # =====================================
   frontend:
     build:
       context: ./frontend
@@ -92,10 +131,19 @@ services:
     ports:
       - "3020:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - automaticpdf-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =====================================
+  # NGINX REVERSE PROXY
+  # =====================================
   nginx:
     image: nginx:alpine
     container_name: automaticpdf-nginx
@@ -103,19 +151,31 @@ services:
     ports:
       - "8095:80"
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     volumes:
       - ./deployment/nginx-production.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - automaticpdf-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+# =====================================
+# RED DOCKER
+# =====================================
 networks:
   automaticpdf-network:
     driver: bridge
     external: false
 
-# Labels para EasyPanel
+# =====================================
+# LABELS PARA EASYPANEL
+# =====================================
 labels:
   - "easypanel.project=hubspot-pdf-generator"
   - "easypanel.domain=automaticpdfhub.cloud"

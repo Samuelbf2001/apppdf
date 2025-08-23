@@ -10,24 +10,11 @@ import { serveProtectedFile, servePublicFile } from './middleware/fileServer';
 import { fileStorageService } from './services/fileStorage';
 import { workerManager } from './workers';
 
-// Middleware de seguridad
+// Middleware de seguridad simplificado
 import {
-  generalRateLimit,
-  authRateLimit,
   securityHeaders,
-  sanitizeInput,
-  validateRequestSize,
-  attackProtection,
-  securityEventLogger,
   corsOptions,
 } from './middleware/security';
-
-import {
-  monitoringMiddleware,
-  errorMetricsMiddleware,
-  getMetrics,
-  cleanupMetrics,
-} from './middleware/monitoring';
 
 // Importar rutas
 import authRoutes from './routes/auth';
@@ -44,29 +31,20 @@ dotenv.config();
 const app = express();
 
 // Puerto del servidor
-const PORT = process.env.APP_PORT || 3001;
+const PORT = process.env.APP_PORT || 3002;
 
 // ========================================
-// MIDDLEWARE DE SEGURIDAD Y CONFIGURACIÓN
+// MIDDLEWARE SIMPLIFICADO Y ROBUSTO
 // ========================================
 
 // Trust proxy para obtener IPs reales detrás de proxies
 app.set('trust proxy', 1);
 
-// Headers de seguridad avanzados
+// Headers de seguridad básicos
 app.use(securityHeaders);
 
 // CORS configurado por entorno
 app.use(cors(corsOptions));
-
-// Protección contra ataques
-app.use(attackProtection);
-
-// Validación de tamaño de requests
-app.use(validateRequestSize);
-
-// Sanitización de inputs
-app.use(sanitizeInput);
 
 // Compresión gzip
 app.use(compression());
@@ -74,23 +52,13 @@ app.use(compression());
 // Parsers con límites configurables
 app.use(express.json({ 
   limit: process.env.MAX_JSON_SIZE || '10mb',
-  strict: true,
 }));
 app.use(express.urlencoded({ 
   extended: true, 
   limit: process.env.MAX_URL_ENCODED_SIZE || '10mb',
 }));
 
-// Rate limiting general
-app.use(generalRateLimit);
-
-// Monitoreo de requests
-app.use(monitoringMiddleware);
-
-// Logging de eventos de seguridad
-app.use(securityEventLogger);
-
-// Logging de requests
+// Logging de requests simple
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path} - ${req.ip}`);
   next();
@@ -102,16 +70,11 @@ const initializeServices = async () => {
     await fileStorageService.initializeStorage();
     await workerManager.start();
     
-    // Inicializar limpieza de métricas
-    cleanupMetrics();
-    
     logger.info('Todos los servicios inicializados correctamente');
   } catch (error) {
     logger.error('Error inicializando servicios:', error);
   }
 };
-
-initializeServices();
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -120,6 +83,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
   });
 });
 
@@ -127,20 +91,15 @@ app.get('/health', (req, res) => {
 app.use('/files/*', authMiddleware, serveProtectedFile);
 app.use('/public/*', servePublicFile);
 
-// Rutas de la API con rate limiting específico
-app.use('/api/auth', authRateLimit, authRoutes);
+// Rutas de la API
+app.use('/api/auth', authRoutes);
 app.use('/api/templates', authMiddleware, templateRoutes);
 app.use('/api/documents', authMiddleware, documentRoutes);
 app.use('/api/hubspot', authMiddleware, hubspotRoutes);
 app.use('/api/queue', queueRoutes);
 
-// Rutas para workflow actions de HubSpot (sin rate limiting estricto)
+// Rutas para workflow actions de HubSpot
 app.use('/api/hubspot/workflow-actions', workflowActionsRoutes);
-
-// Endpoint de métricas (solo desarrollo)
-if (process.env.NODE_ENV === 'development') {
-  app.get('/api/metrics', authMiddleware, getMetrics);
-}
 
 // Ruta para manejar endpoints no encontrados
 app.use('*', (req, res) => {
@@ -151,14 +110,16 @@ app.use('*', (req, res) => {
 });
 
 // Middleware de manejo de errores (debe ir al final)
-app.use(errorMetricsMiddleware);
 app.use(errorHandler);
 
 // Iniciar servidor
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`🚀 Servidor iniciado en puerto ${PORT}`);
   logger.info(`🌟 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`📝 API disponible en http://localhost:${PORT}`);
+  
+  // Inicializar servicios después de que el servidor esté corriendo
+  await initializeServices();
 });
 
 // Manejo graceful de cierre del servidor
@@ -166,6 +127,7 @@ process.on('SIGTERM', () => {
   logger.info('SIGTERM recibido, cerrando servidor HTTP...');
   server.close(() => {
     logger.info('Servidor HTTP cerrado.');
+    process.exit(0);
   });
 });
 
@@ -173,6 +135,7 @@ process.on('SIGINT', () => {
   logger.info('SIGINT recibido, cerrando servidor HTTP...');
   server.close(() => {
     logger.info('Servidor HTTP cerrado.');
+    process.exit(0);
   });
 });
 
